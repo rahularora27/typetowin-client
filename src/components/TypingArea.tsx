@@ -2,14 +2,17 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { NatsConnection, StringCodec } from 'nats.ws';
+import Timer from './Timer';
 
 interface TypingAreaProps {
     natsConnection: NatsConnection | null;
     initialQuote: string;
     timerDuration: number;
+    onGameStart: () => void;
+    onGameOver: (correctChars: number, incorrectChars: number) => void;
 }
 
-function TypingArea({ natsConnection, initialQuote, timerDuration }: TypingAreaProps) {
+function TypingArea({ natsConnection, initialQuote, timerDuration, onGameStart, onGameOver }: TypingAreaProps) {
     const [typedCharacters, setTypedCharacters] = useState('');
     const [correctChars, setCorrectChars] = useState(0);
     const [incorrectChars, setIncorrectChars] = useState(0);
@@ -18,8 +21,7 @@ function TypingArea({ natsConnection, initialQuote, timerDuration }: TypingAreaP
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [wordsToPrefetch, setWordsToPrefetch] = useState(10);
-    const [timeLeft, setTimeLeft] = useState(timerDuration);
-    const [gameOver, setGameOver] = useState(false);
+    const [gameStarted, setGameStarted] = useState(false);
 
     const sc = StringCodec();
 
@@ -29,33 +31,25 @@ function TypingArea({ natsConnection, initialQuote, timerDuration }: TypingAreaP
         setIncorrectChars(0);
         setStartTime(null);
         setFullQuote(initialQuote);
-        setTimeLeft(timerDuration);
-        setGameOver(false);
+        setGameStarted(false);
     }, [timerDuration, initialQuote]);
 
     useEffect(() => {
-        let intervalId: NodeJS.Timeout;
-
-        if (startTime !== null && timeLeft > 0 && !gameOver) {
-            intervalId = setInterval(() => {
-                setTimeLeft((prevTime) => prevTime - 1);
-            }, 1000);
-        }
-
-        if (timeLeft === 0 && !gameOver) {
-            setGameOver(true);
-            console.log("Game Over! Time's up!");
-        }
-
-        return () => clearInterval(intervalId);
-    }, [startTime, timeLeft, gameOver]);
-
-    useEffect(() => {
         const handleKeyDown = (event: KeyboardEvent) => {
-            if (gameOver) return;
+            if (event.key === 'Shift' || event.key === 'Control' || event.key === 'Alt' || event.key === 'Meta') return;
 
-            if (event.key === 'Shift' || event.key === 'Control' || event.key === 'Alt' || event.key === 'Meta') {
-                return;
+            if (event.key === ' ') {
+                // Check if the current character in the quote is a space
+                if (typedCharacters.length < fullQuote.length && fullQuote[typedCharacters.length] !== ' ') {
+                    event.preventDefault(); // Prevent adding the space
+                    return;
+                }
+            } else {
+                // If the current character is a space, prevent any non-space character from being typed
+                 if (typedCharacters.length < fullQuote.length && fullQuote[typedCharacters.length] === ' ') {
+                    event.preventDefault();
+                    return;
+                }
             }
 
             if (event.key === 'Backspace') {
@@ -66,6 +60,8 @@ function TypingArea({ natsConnection, initialQuote, timerDuration }: TypingAreaP
 
             if (startTime === null) {
                 setStartTime(Date.now());
+                onGameStart();
+                setGameStarted(true);
             }
         };
 
@@ -74,13 +70,15 @@ function TypingArea({ natsConnection, initialQuote, timerDuration }: TypingAreaP
         return () => {
             document.removeEventListener('keydown', handleKeyDown);
         };
-    }, [startTime, gameOver]);
+    }, [startTime, onGameStart, fullQuote, typedCharacters.length]);
 
     useEffect(() => {
         let correct = 0;
         let incorrect = 0;
 
         for (let i = 0; i < Math.min(typedCharacters.length, fullQuote.length); i++) {
+            if (fullQuote[i] === ' ') continue; // Skip spaces in the quote
+
             if (typedCharacters[i] === fullQuote[i]) {
                 correct++;
             } else {
@@ -92,20 +90,18 @@ function TypingArea({ natsConnection, initialQuote, timerDuration }: TypingAreaP
         setIncorrectChars(incorrect);
 
         const remainingChars = fullQuote.length - typedCharacters.length;
-        if (remainingChars < 20 && !gameOver) {
+        if (remainingChars < 20 && gameStarted) {
             const fetchMoreWords = async () => {
                 setIsLoading(true);
                 setError(null);
 
                 try {
-                    if (!natsConnection) {
-                        throw new Error("NATS connection is not available.");
-                    }
+                    if (!natsConnection) throw new Error("NATS connection is not available.");
 
                     const request = { wordCount: wordsToPrefetch };
                     const msg = await natsConnection.request("quote.next", sc.encode(JSON.stringify(request)), { timeout: 5000 });
                     const quoteData = JSON.parse(sc.decode(msg.data));
-                    setFullQuote((prevQuote) => prevQuote + " " + quoteData.text); // Append new words
+                    setFullQuote((prevQuote) => prevQuote + " " + quoteData.text);
                     setIsLoading(false);
                 } catch (e: any) {
                     setError(`Failed to fetch next words from NATS: ${e.message}`);
@@ -116,25 +112,19 @@ function TypingArea({ natsConnection, initialQuote, timerDuration }: TypingAreaP
             fetchMoreWords();
         }
 
-        if (timeLeft === 0 && !gameOver) {
-            setGameOver(true);
-            console.log("Game Over! Time's up!");
-        }
-
-    }, [typedCharacters, fullQuote, natsConnection, timeLeft, gameOver]);
+    }, [typedCharacters, fullQuote, natsConnection, gameStarted]);
 
     return (
         <div>
-            {error && <p style={{ color: 'red' }}>{error}</p>}
-            <div className="text-lg">
+            {error && <p className="text-red-500">{error}</p>}
+            <p className="text-gray-700 text-4xl">
+                <Timer duration={timerDuration} isRunning={gameStarted} onExpire={() => onGameOver(correctChars, incorrectChars)} />s
+            </p>
+            <div className="text-3xl font-mono tracking-wide">
                 {fullQuote.split('').map((char, index) => {
                     let className = '';
                     if (index < typedCharacters.length) {
-                        if (typedCharacters[index] === char) {
-                            className = 'text-green-500';
-                        } else {
-                            className = 'text-red-500';
-                        }
+                        className = typedCharacters[index] === char ? 'text-green-500' : 'text-red-500';
                     }
                     return (
                         <span key={index} className={className}>
@@ -143,11 +133,7 @@ function TypingArea({ natsConnection, initialQuote, timerDuration }: TypingAreaP
                     );
                 })}
             </div>
-            <p>Time Left: {timeLeft}</p>
-            <p>Correct Characters: {correctChars}</p>
-            <p>Incorrect Characters: {incorrectChars}</p>
-            {isLoading && <p>Loading...</p>}
-            {gameOver && <p>Game Over!</p>}
+            {isLoading && <p className="text-gray-500">Loading...</p>}
         </div>
     );
 }

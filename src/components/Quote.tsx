@@ -34,12 +34,13 @@ function Quote({ natsConnection, onQuoteReceived }: QuoteProps) {
     };
 
     return (
-        <div>
-            {error && <p style={{ color: 'red' }}>{error}</p>}
-            <button onClick={fetchQuote} disabled={isLoading}>
-                {isLoading ? "Get Quote" : "Get Quote"}
-            </button>
-        </div>
+        <button
+            className="px-6 py-3 bg-green-500 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50 disabled:bg-gray-400 disabled:cursor-not-allowed"
+            onClick={fetchQuote}
+            disabled={isLoading}
+        >
+            {isLoading ? "Loading..." : "Single Player"}
+        </button>
     );
 }
 
