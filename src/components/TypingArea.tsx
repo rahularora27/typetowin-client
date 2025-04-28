@@ -1,18 +1,19 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
-import { NatsConnection, StringCodec } from 'nats.ws';
+import { StringCodec } from 'nats.ws';
+import { useNats } from '@/context/NatsContext';
 import Timer from './Timer';
 
 interface TypingAreaProps {
-    natsConnection: NatsConnection | null;
     initialQuote: string;
     timerDuration: number;
     onGameStart: () => void;
     onGameOver: (correctChars: number, incorrectChars: number) => void;
 }
 
-function TypingArea({ natsConnection, initialQuote, timerDuration, onGameStart, onGameOver }: TypingAreaProps) {
+function TypingArea({ initialQuote, timerDuration, onGameStart, onGameOver }: TypingAreaProps) {
+    const { nats } = useNats();
     const [typedCharacters, setTypedCharacters] = useState('');
     const [correctChars, setCorrectChars] = useState(0);
     const [incorrectChars, setIncorrectChars] = useState(0);
@@ -32,87 +33,74 @@ function TypingArea({ natsConnection, initialQuote, timerDuration, onGameStart, 
         setStartTime(null);
         setFullQuote(initialQuote);
         setGameStarted(false);
-    }, [timerDuration, initialQuote]);
-
-    useEffect(() => {
+      }, [timerDuration, initialQuote]);
+    
+      useEffect(() => {
         const handleKeyDown = (event: KeyboardEvent) => {
-            if (event.key === 'Shift' || event.key === 'Control' || event.key === 'Alt' || event.key === 'Meta') return;
-
-            if (event.key === ' ') {
-                // Check if the current character in the quote is a space
-                if (typedCharacters.length < fullQuote.length && fullQuote[typedCharacters.length] !== ' ') {
-                    event.preventDefault(); // Prevent adding the space
-                    return;
-                }
-            } else {
-                // If the current character is a space, prevent any non-space character from being typed
-                 if (typedCharacters.length < fullQuote.length && fullQuote[typedCharacters.length] === ' ') {
-                    event.preventDefault();
-                    return;
-                }
+          if (event.key === 'Shift' || event.key === 'Control' || event.key === 'Alt' || event.key === 'Meta') return;
+          if (event.key === ' ') {
+            if (typedCharacters.length < fullQuote.length && fullQuote[typedCharacters.length] !== ' ') {
+              event.preventDefault();
+              return;
             }
-
-            if (event.key === 'Backspace') {
-                setTypedCharacters((prev) => prev.slice(0, -1));
-            } else {
-                setTypedCharacters((prev) => prev + event.key);
+          } else {
+            if (typedCharacters.length < fullQuote.length && fullQuote[typedCharacters.length] === ' ') {
+              event.preventDefault();
+              return;
             }
-
-            if (startTime === null) {
-                setStartTime(Date.now());
-                onGameStart();
-                setGameStarted(true);
-            }
+          }
+          if (event.key === 'Backspace') {
+            setTypedCharacters((prev) => prev.slice(0, -1));
+          } else {
+            setTypedCharacters((prev) => prev + event.key);
+          }
+          if (startTime === null) {
+            setStartTime(Date.now());
+            onGameStart();
+            setGameStarted(true);
+          }
         };
-
         document.addEventListener('keydown', handleKeyDown);
-
         return () => {
-            document.removeEventListener('keydown', handleKeyDown);
+          document.removeEventListener('keydown', handleKeyDown);
         };
-    }, [startTime, onGameStart, fullQuote, typedCharacters.length]);
-
-    useEffect(() => {
+      }, [startTime, onGameStart, fullQuote, typedCharacters.length]);
+    
+      useEffect(() => {
         let correct = 0;
         let incorrect = 0;
-
         for (let i = 0; i < Math.min(typedCharacters.length, fullQuote.length); i++) {
-            if (fullQuote[i] === ' ') continue; // Skip spaces in the quote
-
-            if (typedCharacters[i] === fullQuote[i]) {
-                correct++;
-            } else {
-                incorrect++;
-            }
+          if (fullQuote[i] === ' ') continue;
+          if (typedCharacters[i] === fullQuote[i]) {
+            correct++;
+          } else {
+            incorrect++;
+          }
         }
-
         setCorrectChars(correct);
         setIncorrectChars(incorrect);
-
+    
         const remainingChars = fullQuote.length - typedCharacters.length;
         if (remainingChars < 20 && gameStarted) {
-            const fetchMoreWords = async () => {
-                setIsLoading(true);
-                setError(null);
-
-                try {
-                    if (!natsConnection) throw new Error("NATS connection is not available.");
-
-                    const request = { wordCount: wordsToPrefetch };
-                    const msg = await natsConnection.request("quote.next", sc.encode(JSON.stringify(request)), { timeout: 5000 });
-                    const quoteData = JSON.parse(sc.decode(msg.data));
-                    setFullQuote((prevQuote) => prevQuote + " " + quoteData.text);
-                    setIsLoading(false);
-                } catch (e: any) {
-                    setError(`Failed to fetch next words from NATS: ${e.message}`);
-                    setIsLoading(false);
-                    console.error("Error fetching next words from NATS:", e);
-                }
-            };
-            fetchMoreWords();
+          const fetchMoreWords = async () => {
+            setIsLoading(true);
+            setError(null);
+            try {
+              if (!nats) throw new Error("NATS connection is not available.");
+              const request = { wordCount: wordsToPrefetch };
+              const msg = await nats.request("quote.next", sc.encode(JSON.stringify(request)), { timeout: 5000 });
+              const quoteData = JSON.parse(sc.decode(msg.data));
+              setFullQuote((prevQuote) => prevQuote + " " + quoteData.text);
+              setIsLoading(false);
+            } catch (e: any) {
+              setError(`Failed to fetch next words from NATS: ${e.message}`);
+              setIsLoading(false);
+              console.error("Error fetching next words from NATS:", e);
+            }
+          };
+          fetchMoreWords();
         }
-
-    }, [typedCharacters, fullQuote, natsConnection, gameStarted]);
+      }, [typedCharacters, fullQuote, nats, gameStarted]);
 
     return (
         <div>

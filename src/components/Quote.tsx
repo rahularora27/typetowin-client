@@ -1,47 +1,41 @@
-'use client';
+import React, { useEffect, useState } from 'react';
+import { StringCodec } from 'nats.ws';
+import { useNats } from '@/context/NatsContext';
 
-import React, { useState } from 'react';
-import { StringCodec, NatsConnection } from 'nats.ws';
+const sc = StringCodec();
 
 interface QuoteProps {
-    natsConnection: NatsConnection | null;
-    onQuoteReceived: (quote: string) => void;
+  onSessionReceived: (sessionId: string, quote: string) => void;
 }
 
-function Quote({ natsConnection, onQuoteReceived }: QuoteProps) {
-    const [isLoading, setIsLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
-    const sc = StringCodec();
+function Quote({ onSessionReceived }: QuoteProps) {
+  const { nats } = useNats();
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-    const fetchQuote = async () => {
-        setIsLoading(true);
-        setError(null);
+  useEffect(() => {
+    if (!nats) return; // <-- Only run when nats is available
 
-        try {
-            if (!natsConnection) {
-                throw new Error("NATS connection is not available.");
-            }
-
-            const msg = await natsConnection.request("quote.request", sc.encode(""), { timeout: 5000 });
-            const quoteData = JSON.parse(sc.decode(msg.data));
-            onQuoteReceived(quoteData.text);
-            setIsLoading(false);
-        } catch (e: any) {
-            setError(`Failed to fetch initial quote from NATS: ${e.message}`);
-            setIsLoading(false);
-            console.error("Error fetching initial quote from NATS:", e);
-        }
+    const fetchSession = async () => {
+      setIsLoading(true);
+      setError(null);
+      try {
+        const msg = await nats.request("game.session.create", sc.encode("{}"), { timeout: 5000 });
+        const sessionData = JSON.parse(sc.decode(msg.data));
+        onSessionReceived(sessionData.sessionId, sessionData.quote);
+        setIsLoading(false);
+      } catch (e: any) {
+        setError(`Failed to fetch session from NATS: ${e.message}`);
+        setIsLoading(false);
+        console.error("Error fetching session from NATS:", e);
+      }
     };
+    fetchSession();
+  }, [nats, onSessionReceived]);
 
-    return (
-        <button
-            className="px-6 py-3 bg-green-500 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50 disabled:bg-gray-400 disabled:cursor-not-allowed"
-            onClick={fetchQuote}
-            disabled={isLoading}
-        >
-            {isLoading ? "Loading..." : "Single Player"}
-        </button>
-    );
+  if (isLoading) return <div>Loading...</div>;
+  if (error) return <div className="text-red-500">{error}</div>;
+  return null;
 }
 
 export default Quote;

@@ -1,7 +1,7 @@
-import SinglePlayerGame from "@/pages/SinglePlayerGame";
+import Link from "next/link";
 
 export default function Home() {
     return (
-        <SinglePlayerGame />
+        <Link href="/singleplayer">Play Single Player</Link>
     );
 }
