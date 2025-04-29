@@ -4,10 +4,9 @@ import React, { useState, useCallback, useEffect, useRef } from "react";
 import Quote from "@/components/Quote";
 import TypingArea from "@/components/TypingArea";
 import Results from "@/components/Results";
-import { useNats } from "@/context/NatsContext";
-import { StringCodec } from "nats.ws";
 
 // --- ResultSubmitter Component ---
+
 interface ResultSubmitterProps {
   sessionId: string;
   quote: string;
@@ -25,7 +24,6 @@ const ResultSubmitter: React.FC<ResultSubmitterProps> = ({
   timer,
   onSubmitted,
 }) => {
-  const { nats } = useNats();
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
   const hasSubmitted = useRef(false);
@@ -35,12 +33,7 @@ const ResultSubmitter: React.FC<ResultSubmitterProps> = ({
     hasSubmitted.current = true;
 
     const submitResult = async () => {
-      if (!nats) {
-        setSubmitError("NATS connection not available.");
-        return;
-      }
       try {
-        const sc = StringCodec();
         const result = {
           sessionId,
           quote,
@@ -48,11 +41,12 @@ const ResultSubmitter: React.FC<ResultSubmitterProps> = ({
           incorrectChars,
           timer,
         };
-        await nats.request(
-          "game.session.result",
-          sc.encode(JSON.stringify(result)),
-          { timeout: 5000 }
-        );
+        const res = await fetch('/api/game/result', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(result),
+        });
+        if (!res.ok) throw new Error('Failed to submit result.');
         setSubmitted(true);
         onSubmitted();
       } catch (e: any) {
@@ -69,9 +63,8 @@ const ResultSubmitter: React.FC<ResultSubmitterProps> = ({
 };
 
 // --- Main Page Component ---
-export default function SinglePlayerPage() {
-  const { error } = useNats();
 
+export default function SinglePlayerPage() {
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [quote, setQuote] = useState<string>('');
   const [timerDuration, setTimerDuration] = useState(30);
@@ -131,8 +124,6 @@ export default function SinglePlayerPage() {
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
-      {error && <div className="text-red-500 mb-4">{error}</div>}
-
       {!quoteFetched && (
         <div>
           <Quote onSessionReceived={handleSessionReceived} />

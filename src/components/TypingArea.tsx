@@ -1,8 +1,6 @@
 'use client';
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { StringCodec } from 'nats.ws';
-import { useNats } from '@/context/NatsContext';
 import Timer from './Timer';
 
 interface TypingAreaProps {
@@ -13,8 +11,6 @@ interface TypingAreaProps {
 }
 
 function TypingArea({ initialQuote, timerDuration, onGameStart, onGameOver }: TypingAreaProps) {
-  const { nats } = useNats();
-
   const [typedCharacters, setTypedCharacters] = useState('');
   const [correctChars, setCorrectChars] = useState(0);
   const [incorrectChars, setIncorrectChars] = useState(0);
@@ -25,8 +21,6 @@ function TypingArea({ initialQuote, timerDuration, onGameStart, onGameOver }: Ty
   const [wordsToPrefetch] = useState(10);
   const [gameStarted, setGameStarted] = useState(false);
   const [gameOver, setGameOver] = useState(false);
-
-  const sc = StringCodec();
 
   // Refs to always have the latest values in callbacks
   const correctCharsRef = useRef(correctChars);
@@ -119,25 +113,21 @@ function TypingArea({ initialQuote, timerDuration, onGameStart, onGameOver }: Ty
         setIsLoading(true);
         setError(null);
         try {
-          if (!nats) throw new Error("NATS connection is not available.");
-          const request = { wordCount: wordsToPrefetch };
-          const msg = await nats.request(
-            "quote.next",
-            sc.encode(JSON.stringify(request)),
-            { timeout: 5000 }
-          );
-          const quoteData = JSON.parse(sc.decode(msg.data));
+          // REST API call instead of NATS
+          const res = await fetch(`/api/game/next?wordCount=${wordsToPrefetch}`);
+          if (!res.ok) throw new Error('Failed to fetch next words from backend.');
+          const quoteData = await res.json();
           setFullQuote((prevQuote) => prevQuote + " " + quoteData.text);
           setIsLoading(false);
         } catch (e: any) {
-          setError(`Failed to fetch next words from NATS: ${e.message}`);
+          setError(`Failed to fetch next words: ${e.message}`);
           setIsLoading(false);
-          console.error("Error fetching next words from NATS:", e);
+          console.error("Error fetching next words:", e);
         }
       };
       fetchMoreWords();
     }
-  }, [typedCharacters, fullQuote, nats, gameStarted, isLoading, gameOver, wordsToPrefetch, sc]);
+  }, [typedCharacters, fullQuote, gameStarted, isLoading, gameOver, wordsToPrefetch]);
 
   // Only call onGameOver once
   const handleExpire = useCallback(() => {
