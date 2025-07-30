@@ -1,19 +1,16 @@
-'use client';
-
 import React, { useState, useCallback, useEffect, useRef } from "react";
-import Quote from "@/components/Quote";
-import TypingArea from "@/components/TypingArea";
-import Results from "@/components/Results";
+import Quote from "../components/Quote";
+import TypingArea from "../components/TypingArea";
+import Results from "../components/Results";
 
 // --- ResultSubmitter Component ---
-
 interface ResultSubmitterProps {
-  sessionId: string;
-  quote: string;
-  correctChars: number;
-  incorrectChars: number;
-  timer: number;
-  onSubmitted: () => void;
+    sessionId: string;
+    quote: string;
+    correctChars: number;
+    incorrectChars: number;
+    timer: number;
+    onSubmitted: () => void;
 }
 
 const ResultSubmitter: React.FC<ResultSubmitterProps> = ({
@@ -29,7 +26,7 @@ const ResultSubmitter: React.FC<ResultSubmitterProps> = ({
   const hasSubmitted = useRef(false);
 
   useEffect(() => {
-    if (hasSubmitted.current) return; // Prevent double submission (React StrictMode)
+    if (hasSubmitted.current) return;
     hasSubmitted.current = true;
 
     const submitResult = async () => {
@@ -54,17 +51,15 @@ const ResultSubmitter: React.FC<ResultSubmitterProps> = ({
       }
     };
     submitResult();
-    // eslint-disable-next-line
-  }, []);
+  }, [sessionId, quote, correctChars, incorrectChars, timer, onSubmitted]);
 
   if (submitError) return <div className="text-red-500">{submitError}</div>;
   if (!submitted) return <div>Submitting your result...</div>;
   return null;
 };
 
-// --- Main Page Component ---
 
-export default function SinglePlayerPage() {
+export default function SinglePlayer() {
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [quote, setQuote] = useState<string>('');
   const [timerDuration, setTimerDuration] = useState(30);
@@ -75,7 +70,6 @@ export default function SinglePlayerPage() {
   const [incorrectChars, setIncorrectChars] = useState(0);
   const [resultSubmitted, setResultSubmitted] = useState(false);
 
-  // Handler for receiving sessionId and quote
   const handleSessionReceived = useCallback((newSessionId: string, newQuote: string) => {
     setSessionId(newSessionId);
     setQuote(newQuote);
@@ -95,10 +89,9 @@ export default function SinglePlayerPage() {
     setGameOver(true);
     setCorrectChars(correct);
     setIncorrectChars(incorrect);
-    setResultSubmitted(false); // Reset for new submission
+    setResultSubmitted(false);
   }, []);
 
-  // Reset everything for a new game
   const handleRestart = useCallback(() => {
     setSessionId(null);
     setQuote('');
@@ -110,11 +103,10 @@ export default function SinglePlayerPage() {
     setResultSubmitted(false);
   }, []);
 
-  // Tab-to-restart support
   useEffect(() => {
     const handleTabRestart = (event: KeyboardEvent) => {
       if (event.key === "Tab") {
-        event.preventDefault(); // Prevent focus change
+        event.preventDefault();
         handleRestart();
       }
     };
@@ -166,7 +158,6 @@ export default function SinglePlayerPage() {
 
       {gameOver && (
         <div className="w-full max-w-3xl p-6 rounded-lg flex flex-col items-center">
-          {/* Submit result only once per game over */}
           {sessionId && !resultSubmitted && (
             <ResultSubmitter
               sessionId={sessionId}
