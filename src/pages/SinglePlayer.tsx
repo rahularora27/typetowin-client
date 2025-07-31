@@ -1,63 +1,7 @@
-import React, { useState, useCallback, useEffect, useRef } from "react";
+import { useState, useCallback, useEffect } from "react";
 import Quote from "../components/Quote";
 import TypingArea from "../components/TypingArea";
 import Results from "../components/Results";
-
-// --- ResultSubmitter Component ---
-interface ResultSubmitterProps {
-    sessionId: string;
-    quote: string;
-    correctChars: number;
-    incorrectChars: number;
-    timer: number;
-    onSubmitted: () => void;
-}
-
-const ResultSubmitter: React.FC<ResultSubmitterProps> = ({
-  sessionId,
-  quote,
-  correctChars,
-  incorrectChars,
-  timer,
-  onSubmitted,
-}) => {
-  const [submitError, setSubmitError] = useState<string | null>(null);
-  const [submitted, setSubmitted] = useState(false);
-  const hasSubmitted = useRef(false);
-
-  useEffect(() => {
-    if (hasSubmitted.current) return;
-    hasSubmitted.current = true;
-
-    const submitResult = async () => {
-      try {
-        const result = {
-          sessionId,
-          quote,
-          correctChars,
-          incorrectChars,
-          timer,
-        };
-        const res = await fetch('/api/game/result', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(result),
-        });
-        if (!res.ok) throw new Error('Failed to submit result.');
-        setSubmitted(true);
-        onSubmitted();
-      } catch (e: any) {
-        setSubmitError(`Failed to submit result: ${e.message}`);
-      }
-    };
-    submitResult();
-  }, [sessionId, quote, correctChars, incorrectChars, timer, onSubmitted]);
-
-  if (submitError) return <div className="text-red-500">{submitError}</div>;
-  if (!submitted) return <div>Submitting your result...</div>;
-  return null;
-};
-
 
 export default function SinglePlayer() {
   const [sessionId, setSessionId] = useState<string | null>(null);
@@ -68,7 +12,6 @@ export default function SinglePlayer() {
   const [gameOver, setGameOver] = useState(false);
   const [correctChars, setCorrectChars] = useState(0);
   const [incorrectChars, setIncorrectChars] = useState(0);
-  const [resultSubmitted, setResultSubmitted] = useState(false);
 
   const handleSessionReceived = useCallback((newSessionId: string, newQuote: string) => {
     setSessionId(newSessionId);
@@ -89,7 +32,6 @@ export default function SinglePlayer() {
     setGameOver(true);
     setCorrectChars(correct);
     setIncorrectChars(incorrect);
-    setResultSubmitted(false);
   }, []);
 
   const handleRestart = useCallback(() => {
@@ -100,7 +42,6 @@ export default function SinglePlayer() {
     setGameOver(false);
     setCorrectChars(0);
     setIncorrectChars(0);
-    setResultSubmitted(false);
   }, []);
 
   useEffect(() => {
@@ -158,16 +99,6 @@ export default function SinglePlayer() {
 
       {gameOver && (
         <div className="w-full max-w-3xl p-6 rounded-lg flex flex-col items-center">
-          {sessionId && !resultSubmitted && (
-            <ResultSubmitter
-              sessionId={sessionId}
-              quote={quote}
-              correctChars={correctChars}
-              incorrectChars={incorrectChars}
-              timer={timerDuration}
-              onSubmitted={() => setResultSubmitted(true)}
-            />
-          )}
           <Results correctChars={correctChars} incorrectChars={incorrectChars} />
           <div className="mt-2 text-gray-500 text-sm">
             Press <kbd>Tab</kbd> to restart

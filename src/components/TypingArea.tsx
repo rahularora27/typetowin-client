@@ -1,6 +1,4 @@
-'use client';
-
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import Timer from './Timer';
 
 interface TypingAreaProps {

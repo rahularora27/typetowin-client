@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 interface QuoteProps {
   onSessionReceived: (sessionId: string, quote: string) => void;
@@ -13,7 +13,6 @@ function Quote({ onSessionReceived }: QuoteProps) {
       setIsLoading(true);
       setError(null);
       try {
-        // Call your backend REST API to create a session and get a quote
         const res = await fetch('/api/game/session', { method: 'POST' });
         if (!res.ok) throw new Error('Failed to fetch session from backend.');
         const sessionData = await res.json();

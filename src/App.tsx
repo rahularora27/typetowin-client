@@ -1,19 +1,17 @@
-import { useState } from 'react';
-import HomePage from './pages/HomePage';
-import SinglePlayer from './pages/SinglePlayer';
+import { Link } from "react-router-dom";
 
-function App() {
-  const [mode, setMode] = useState<'home' | 'singleplayer'>('home');
-
-  const handleSelectSinglePlayer = () => {
-    setMode('singleplayer');
-  };
-
-  if (mode === 'singleplayer') {
-    return <SinglePlayer />;
-  }
-
-  return <HomePage onSelectSinglePlayer={handleSelectSinglePlayer} />;
+export default function App() {
+  return (
+    <div>
+      <Link to="/singleplayer">
+        <button
+          style={{
+            cursor: "pointer",
+          }}
+        >
+          Play SinglePlayer
+        </button>
+      </Link>
+    </div>
+  );
 }
-
-export default App;
