@@ -4,7 +4,7 @@ import TypingArea from "../components/TypingArea";
 import Results from "../components/Results";
 
 export default function SinglePlayer() {
-  const [sessionId, setSessionId] = useState<string | null>(null);
+  const [_sessionId, setSessionId] = useState<string | null>(null);
   const [quote, setQuote] = useState<string>('');
   const [timerDuration, setTimerDuration] = useState(30);
   const [quoteFetched, setQuoteFetched] = useState(false);

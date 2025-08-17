@@ -13,6 +13,7 @@ export interface Player {
   id: string;
   name: string;
   isOwner: boolean;
+  owner?: boolean; // Jackson might serialize as 'owner' instead of 'isOwner'
 }
 
 export interface GameRoom {
@@ -132,6 +133,27 @@ class WebSocketService {
     this.client.publish({
       destination: `/app/room/${roomId}/track`,
       body: JSON.stringify({ playerId }),
+    });
+  }
+
+  kickPlayer(roomId: string, ownerName: string, playerIdToKick: string) {
+    if (!this.client || !this.isConnected) {
+      throw new Error('WebSocket not connected');
+    }
+
+    this.client.publish({
+      destination: `/app/room/${roomId}/kick`,
+      body: JSON.stringify({ ownerName, playerIdToKick }),
+    });
+  }
+
+  subscribeToKickNotifications(roomId: string, playerId: string, callback: (message: string) => void) {
+    if (!this.client || !this.isConnected) {
+      throw new Error('WebSocket not connected');
+    }
+
+    return this.client.subscribe(`/topic/room/${roomId}/kicked/${playerId}`, (message) => {
+      callback(message.body);
     });
   }
 }
