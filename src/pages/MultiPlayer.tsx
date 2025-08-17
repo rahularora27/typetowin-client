@@ -3,6 +3,7 @@ import { ApiService } from '../services/ApiService';
 import WebSocketService, { ChatMessage, Player, GameRoom } from '../services/WebSocketService';
 import Chat from '../components/Chat';
 import PlayerList from '../components/PlayerList';
+import TypingArea from '../components/TypingArea';
 
 export default function MultiPlayer() {
     const [gameState, setGameState] = useState<'lobby' | 'room' | 'game'>('lobby');
@@ -17,6 +18,7 @@ export default function MultiPlayer() {
     const [createName, setCreateName] = useState('');
     const [joinName, setJoinName] = useState('');
     const [roomId, setRoomId] = useState('');
+    
 
     useEffect(() => {
         // Handle browser close/refresh
@@ -139,6 +141,15 @@ export default function MultiPlayer() {
         }
     };
 
+    const handleGameStart = () => {
+        // Game started - handled by TypingArea component
+    };
+
+    const handleGameOver = (correct: number, incorrect: number) => {
+        // Game over - handled by TypingArea component
+        console.log(`Game finished: ${correct} correct, ${incorrect} incorrect`);
+    };
+
     const handleBackToLobby = () => {
         WebSocketService.disconnect();
         setGameState('lobby');
@@ -200,17 +211,33 @@ export default function MultiPlayer() {
     if (gameState === 'game') {
         return (
             <div className="min-h-screen bg-gradient-to-br from-green-500 via-blue-500 to-purple-500 p-8">
-                <div className="max-w-4xl mx-auto text-center">
-                    <h1 className="text-4xl font-bold text-white mb-8">Game Started!</h1>
-                    <div className="bg-white/95 backdrop-blur-sm rounded-2xl p-8 shadow-2xl">
-                        <p className="text-2xl text-gray-800 mb-4">The typing game will start here...</p>
+                <div className="max-w-6xl mx-auto">
+                    <div className="text-center mb-8">
+                        <h1 className="text-4xl font-bold text-white mb-4">Multiplayer Game</h1>
                         <button
                             onClick={handleBackToLobby}
-                            className="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg"
+                            className="text-white/80 hover:text-white underline"
                         >
-                            Back to Lobby
+                            ← Back to Lobby
                         </button>
                     </div>
+                    
+                    {currentRoom?.quote && (
+                        <div className="bg-white/95 backdrop-blur-sm rounded-2xl p-8 shadow-2xl">
+                            <TypingArea
+                                initialQuote={currentRoom.quote}
+                                timerDuration={60}
+                                onGameStart={handleGameStart}
+                                onGameOver={handleGameOver}
+                            />
+                        </div>
+                    )}
+                    
+                    {!currentRoom?.quote && (
+                        <div className="bg-white/95 backdrop-blur-sm rounded-2xl p-8 shadow-2xl text-center">
+                            <p className="text-2xl text-gray-800">Loading game...</p>
+                        </div>
+                    )}
                 </div>
             </div>
         );
