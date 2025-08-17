@@ -27,6 +27,7 @@ export interface GameRoom {
 class WebSocketService {
   private client: Client | null = null;
   private isConnected = false;
+  private subscriptions: any[] = [];
 
   connect(): Promise<void> {
     return new Promise((resolve, reject) => {
@@ -34,6 +35,9 @@ class WebSocketService {
         resolve();
         return;
       }
+
+      // Clear any existing subscriptions from a previous connection
+      this.subscriptions = [];
 
       this.client = new Client({
         webSocketFactory: () => new SockJS('http://localhost:8080/ws'),
@@ -57,6 +61,14 @@ class WebSocketService {
   }
 
   disconnect() {
+    // Unsubscribe from all subscriptions
+    this.subscriptions.forEach(subscription => {
+      if (subscription) {
+        subscription.unsubscribe();
+      }
+    });
+    this.subscriptions = [];
+
     if (this.client) {
       this.client.deactivate();
       this.isConnected = false;
@@ -68,10 +80,13 @@ class WebSocketService {
       throw new Error('WebSocket not connected');
     }
 
-    return this.client.subscribe(`/topic/room/${roomId}/chat`, (message) => {
+    const subscription = this.client.subscribe(`/topic/room/${roomId}/chat`, (message) => {
       const chatMessage: ChatMessage = JSON.parse(message.body);
       callback(chatMessage);
     });
+    
+    this.subscriptions.push(subscription);
+    return subscription;
   }
 
   subscribeToPlayerUpdates(roomId: string, callback: (players: Player[]) => void) {
@@ -79,10 +94,13 @@ class WebSocketService {
       throw new Error('WebSocket not connected');
     }
 
-    return this.client.subscribe(`/topic/room/${roomId}/players`, (message) => {
+    const subscription = this.client.subscribe(`/topic/room/${roomId}/players`, (message) => {
       const players: Player[] = JSON.parse(message.body);
       callback(players);
     });
+    
+    this.subscriptions.push(subscription);
+    return subscription;
   }
 
   subscribeToGameStart(roomId: string, callback: (room: GameRoom) => void) {
@@ -90,10 +108,13 @@ class WebSocketService {
       throw new Error('WebSocket not connected');
     }
 
-    return this.client.subscribe(`/topic/room/${roomId}/gameStart`, (message) => {
+    const subscription = this.client.subscribe(`/topic/room/${roomId}/gameStart`, (message) => {
       const room: GameRoom = JSON.parse(message.body);
       callback(room);
     });
+    
+    this.subscriptions.push(subscription);
+    return subscription;
   }
 
   sendChatMessage(roomId: string, playerId: string, playerName: string, messageText: string) {
@@ -152,9 +173,12 @@ class WebSocketService {
       throw new Error('WebSocket not connected');
     }
 
-    return this.client.subscribe(`/topic/room/${roomId}/kicked/${playerId}`, (message) => {
+    const subscription = this.client.subscribe(`/topic/room/${roomId}/kicked/${playerId}`, (message) => {
       callback(message.body);
     });
+    
+    this.subscriptions.push(subscription);
+    return subscription;
   }
 }
 
