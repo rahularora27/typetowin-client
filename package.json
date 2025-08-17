@@ -9,10 +9,12 @@
     "serve": "vite preview"
   },
   "dependencies": {
+    "@stomp/stompjs": "^7.1.1",
     "@tailwindcss/vite": "^4.1.11",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "react-router-dom": "^7.7.1"
+    "react-router-dom": "^7.7.1",
+    "sockjs-client": "^1.6.1"
   },
   "devDependencies": {
     "@types/node": "^20",
