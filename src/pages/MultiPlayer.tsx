@@ -108,6 +108,12 @@ export default function MultiPlayer() {
             setCurrentRoom(room);
             setGameState('game');
         });
+
+        // Subscribe to kick notifications
+        WebSocketService.subscribeToKickNotifications(roomId, player.id, (message) => {
+            alert(message);
+            handleBackToLobby();
+        });
     };
 
     const handleSendMessage = (message: string) => {
@@ -124,6 +130,12 @@ export default function MultiPlayer() {
     const handleStartGame = () => {
         if (currentPlayer && currentRoom) {
             WebSocketService.startGame(currentRoom.roomId, currentPlayer.name);
+        }
+    };
+
+    const handleKickPlayer = (playerIdToKick: string) => {
+        if (currentPlayer && currentRoom && currentPlayer.isOwner) {
+            WebSocketService.kickPlayer(currentRoom.roomId, currentPlayer.name, playerIdToKick);
         }
     };
 
@@ -166,6 +178,7 @@ export default function MultiPlayer() {
                                 roomId={currentRoom?.roomId || ''}
                                 currentPlayer={currentPlayer || undefined}
                                 onStartGame={handleStartGame}
+                                onKickPlayer={handleKickPlayer}
                                 gameStarted={currentRoom?.gameStarted || false}
                             />
                         </div>

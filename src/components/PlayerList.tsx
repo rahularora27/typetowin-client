@@ -5,21 +5,13 @@ interface PlayerListProps {
   roomId: string;
   currentPlayer?: Player;
   onStartGame?: () => void;
+  onKickPlayer?: (playerId: string) => void;
   gameStarted: boolean;
 }
 
-export default function PlayerList({ players, roomId, currentPlayer, onStartGame, gameStarted }: PlayerListProps) {
-  const canStartGame = currentPlayer?.isOwner && players.length > 1 && !gameStarted;
+export default function PlayerList({ players, roomId, currentPlayer, onStartGame, onKickPlayer, gameStarted }: PlayerListProps) {
+  const canStartGame = (currentPlayer?.isOwner || (currentPlayer as any)?.owner) && players.length > 1 && !gameStarted;
   
-  // Debug logging
-  console.log('PlayerList Debug:', {
-    currentPlayer,
-    players,
-    canStartGame,
-    isOwner: currentPlayer?.isOwner,
-    playerCount: players.length,
-    gameStarted
-  });
 
   return (
     <div className="bg-white rounded-lg shadow-lg p-6">
@@ -37,7 +29,7 @@ export default function PlayerList({ players, roomId, currentPlayer, onStartGame
           >
             <div className="flex items-center gap-2">
               <span className="font-medium text-gray-800">{player.name}</span>
-              {player.isOwner && (
+              {(player.isOwner || (player as any).owner) && (
                 <span className="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs rounded-full">
                   Owner
                 </span>
@@ -48,7 +40,18 @@ export default function PlayerList({ players, roomId, currentPlayer, onStartGame
                 </span>
               )}
             </div>
-            <div className="w-3 h-3 bg-green-500 rounded-full" title="Online"></div>
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 bg-green-500 rounded-full" title="Online"></div>
+              {(currentPlayer?.isOwner || (currentPlayer as any)?.owner) && !(player.isOwner || (player as any).owner) && currentPlayer?.id !== player.id && !gameStarted && (
+                <button
+                  onClick={() => onKickPlayer?.(player.id)}
+                  className="px-3 py-1 bg-red-500 hover:bg-red-600 text-white text-sm font-semibold rounded transition-colors"
+                  title={`Kick ${player.name}`}
+                >
+                  KICK
+                </button>
+              )}
+            </div>
           </div>
         ))}
       </div>
@@ -56,7 +59,7 @@ export default function PlayerList({ players, roomId, currentPlayer, onStartGame
       {/* Game Controls */}
       {!gameStarted && (
         <div className="border-t pt-4">
-          {currentPlayer?.isOwner ? (
+          {(currentPlayer?.isOwner || (currentPlayer as any)?.owner) ? (
             <div>
               <button
                 onClick={onStartGame}
