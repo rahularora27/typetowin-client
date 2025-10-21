@@ -24,6 +24,7 @@ export default function MultiPlayer() {
     const [gameTimer, setGameTimer] = useState(60);
     const [gameResults, setGameResults] = useState<GameRoom | null>(null);
     const [isGameActive, setIsGameActive] = useState(false);
+    const [timerDuration, setTimerDuration] = useState(60);
     
 
     useEffect(() => {
@@ -58,6 +59,7 @@ export default function MultiPlayer() {
             setCurrentPlayer(player);
             setPlayers(room.players);
             setGameState('room');
+            setTimerDuration(room.gameDuration || 60);
             
             setupWebSocketSubscriptions(room.roomId, player);
         } catch (err) {
@@ -86,6 +88,7 @@ export default function MultiPlayer() {
             setCurrentPlayer(newPlayer || null);
             setPlayers(room.players);
             setGameState('room');
+            setTimerDuration(room.gameDuration || 60);
             
             if (newPlayer) {
                 setupWebSocketSubscriptions(room.roomId, newPlayer);
@@ -149,6 +152,12 @@ export default function MultiPlayer() {
             setGameState('results');
             setIsGameActive(false);
         });
+        
+        // Subscribe to timer changes
+        WebSocketService.subscribeToTimerChanged(roomId, (room) => {
+            setTimerDuration(room.gameDuration || 60);
+            setCurrentRoom(room);
+        });
     };
     
     const handleGameStart = () => {
@@ -164,6 +173,12 @@ export default function MultiPlayer() {
     const handleServerGameOver = () => {
         // Server ended the game - already handled by WebSocket subscription
         console.log('Server ended the game');
+    };
+    
+    const handleTimerSelect = (duration: number) => {
+        if (currentPlayer && currentRoom && currentPlayer.isOwner) {
+            WebSocketService.setTimerDuration(currentRoom.roomId, currentPlayer.name, duration);
+        }
     };
 
     const handleSendMessage = (message: string) => {
@@ -205,6 +220,7 @@ export default function MultiPlayer() {
         setGameTimer(60);
         setGameResults(null);
         setIsGameActive(false);
+        setTimerDuration(60);
     };
 
     if (gameState === 'room') {
@@ -223,6 +239,59 @@ export default function MultiPlayer() {
                             ← Back to Lobby
                         </button>
                     </div>
+                    
+                    {/* Timer Selection - Only for Room Owner */}
+                    {currentPlayer?.isOwner && !currentRoom?.gameStarted && (
+                        <div className="text-center mb-8">
+                            <div className="bg-white/95 backdrop-blur-sm rounded-2xl p-6 shadow-2xl border border-white/20 inline-block">
+                                <h3 className="text-lg font-semibold text-gray-800 mb-4">Select Game Duration</h3>
+                                <div className="flex space-x-4">
+                                    <button
+                                        className={`px-6 py-3 font-semibold rounded-xl transition-all duration-300 ${
+                                            timerDuration === 15
+                                                ? 'bg-indigo-500 text-white shadow-lg'
+                                                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                                        }`}
+                                        onClick={() => handleTimerSelect(15)}
+                                    >
+                                        15s
+                                    </button>
+                                    <button
+                                        className={`px-6 py-3 font-semibold rounded-xl transition-all duration-300 ${
+                                            timerDuration === 30
+                                                ? 'bg-indigo-500 text-white shadow-lg'
+                                                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                                        }`}
+                                        onClick={() => handleTimerSelect(30)}
+                                    >
+                                        30s
+                                    </button>
+                                    <button
+                                        className={`px-6 py-3 font-semibold rounded-xl transition-all duration-300 ${
+                                            timerDuration === 60
+                                                ? 'bg-indigo-500 text-white shadow-lg'
+                                                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                                        }`}
+                                        onClick={() => handleTimerSelect(60)}
+                                    >
+                                        60s
+                                    </button>
+                                </div>
+                                <p className="text-sm text-gray-600 mt-3">Current: {timerDuration} seconds</p>
+                            </div>
+                        </div>
+                    )}
+                    
+                    {/* Timer Display for Non-Owners */}
+                    {!currentPlayer?.isOwner && !currentRoom?.gameStarted && (
+                        <div className="text-center mb-8">
+                            <div className="bg-white/95 backdrop-blur-sm rounded-2xl p-4 shadow-lg border border-white/20 inline-block">
+                                <p className="text-gray-700">
+                                    <span className="font-semibold">Game Duration:</span> {timerDuration} seconds
+                                </p>
+                            </div>
+                        </div>
+                    )}
 
                     {/* Room Content */}
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -288,7 +357,7 @@ export default function MultiPlayer() {
                         <div className="bg-white/95 backdrop-blur-sm rounded-2xl p-8 shadow-2xl">
                             <TypingArea
                                 initialQuote={currentRoom.quote}
-                                timerDuration={60}
+                                timerDuration={timerDuration}
                                 onGameStart={handleGameStart}
                                 onGameOver={handleGameOver}
                                 isMultiplayer={true}

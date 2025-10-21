@@ -22,6 +22,7 @@ export interface GameRoom {
   ownerId: string;
   gameStarted: boolean;
   quote?: string;
+  gameDuration?: number;
 }
 
 class WebSocketService {
@@ -173,6 +174,20 @@ class WebSocketService {
     return subscription;
   }
 
+  subscribeToTimerChanged(roomId: string, callback: (room: GameRoom) => void) {
+    if (!this.client || !this.isConnected) {
+      throw new Error('WebSocket not connected');
+    }
+
+    const subscription = this.client.subscribe(`/topic/room/${roomId}/timerChanged`, (message) => {
+      const room: GameRoom = JSON.parse(message.body);
+      callback(room);
+    });
+    
+    this.subscriptions.push(subscription);
+    return subscription;
+  }
+
   sendChatMessage(roomId: string, playerId: string, playerName: string, messageText: string) {
     if (!this.client || !this.isConnected) {
       throw new Error('WebSocket not connected');
@@ -235,6 +250,17 @@ class WebSocketService {
     
     this.subscriptions.push(subscription);
     return subscription;
+  }
+
+  setTimerDuration(roomId: string, playerName: string, duration: number) {
+    if (!this.client || !this.isConnected) {
+      throw new Error('WebSocket not connected');
+    }
+
+    this.client.publish({
+      destination: `/app/room/${roomId}/setTimer`,
+      body: JSON.stringify({ playerName, duration }),
+    });
   }
 }
 
