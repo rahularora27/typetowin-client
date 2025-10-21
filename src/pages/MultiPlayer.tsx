@@ -6,7 +6,7 @@ import PlayerList from '../components/PlayerList';
 import TypingArea from '../components/TypingArea';
 
 export default function MultiPlayer() {
-    const [gameState, setGameState] = useState<'lobby' | 'room' | 'game'>('lobby');
+    const [gameState, setGameState] = useState<'lobby' | 'room' | 'countdown' | 'game' | 'results'>('lobby');
     const [currentRoom, setCurrentRoom] = useState<GameRoom | null>(null);
     const [currentPlayer, setCurrentPlayer] = useState<Player | null>(null);
     const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
@@ -18,6 +18,12 @@ export default function MultiPlayer() {
     const [createName, setCreateName] = useState('');
     const [joinName, setJoinName] = useState('');
     const [roomId, setRoomId] = useState('');
+    
+    // Countdown and timer states
+    const [countdown, setCountdown] = useState(0);
+    const [gameTimer, setGameTimer] = useState(60);
+    const [gameResults, setGameResults] = useState<GameRoom | null>(null);
+    const [isGameActive, setIsGameActive] = useState(false);
     
 
     useEffect(() => {
@@ -116,6 +122,48 @@ export default function MultiPlayer() {
             alert(message);
             handleBackToLobby();
         });
+        
+        // Subscribe to countdown
+        WebSocketService.subscribeToCountdown(roomId, (countdownTime) => {
+            setCountdown(countdownTime);
+            if (countdownTime > 0) {
+                setGameState('countdown');
+            }
+        });
+        
+        // Subscribe to game started (after countdown)
+        WebSocketService.subscribeToGameStarted(roomId, (room) => {
+            setCurrentRoom(room);
+            setGameState('game');
+            setIsGameActive(true);
+        });
+        
+        // Subscribe to game timer
+        WebSocketService.subscribeToGameTimer(roomId, (timeLeft) => {
+            setGameTimer(timeLeft);
+        });
+        
+        // Subscribe to game ended
+        WebSocketService.subscribeToGameEnded(roomId, (room) => {
+            setGameResults(room);
+            setGameState('results');
+            setIsGameActive(false);
+        });
+    };
+    
+    const handleGameStart = () => {
+        // Game started by TypingArea - no action needed for multiplayer
+        console.log('Multiplayer typing started');
+    };
+    
+    const handleGameOver = (correctChars: number, incorrectChars: number) => {
+        // Game ended by server timer - no action needed
+        console.log(`Multiplayer game finished: ${correctChars} correct, ${incorrectChars} incorrect`);
+    };
+    
+    const handleServerGameOver = () => {
+        // Server ended the game - already handled by WebSocket subscription
+        console.log('Server ended the game');
     };
 
     const handleSendMessage = (message: string) => {
@@ -141,14 +189,6 @@ export default function MultiPlayer() {
         }
     };
 
-    const handleGameStart = () => {
-        // Game started - handled by TypingArea component
-    };
-
-    const handleGameOver = (correct: number, incorrect: number) => {
-        // Game over - handled by TypingArea component
-        console.log(`Game finished: ${correct} correct, ${incorrect} incorrect`);
-    };
 
     const handleBackToLobby = () => {
         WebSocketService.disconnect();
@@ -161,6 +201,10 @@ export default function MultiPlayer() {
         setJoinName('');
         setRoomId('');
         setError(null);
+        setCountdown(0);
+        setGameTimer(60);
+        setGameResults(null);
+        setIsGameActive(false);
     };
 
     if (gameState === 'room') {
@@ -208,6 +252,24 @@ export default function MultiPlayer() {
         );
     }
 
+    if (gameState === 'countdown') {
+        return (
+            <div className="min-h-screen bg-gradient-to-br from-yellow-500 via-orange-500 to-red-500 flex items-center justify-center p-8">
+                <div className="max-w-2xl mx-auto text-center">
+                    <div className="bg-white/95 backdrop-blur-sm rounded-2xl p-12 shadow-2xl">
+                        <h1 className="text-6xl font-bold text-gray-800 mb-8">Get Ready!</h1>
+                        <div className="text-9xl font-bold text-orange-500 mb-8 animate-pulse">
+                            {countdown > 0 ? countdown : 'GO!'}
+                        </div>
+                        <p className="text-xl text-gray-600">
+                            {countdown > 0 ? 'Game starting in...' : 'Start typing now!'}
+                        </p>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+    
     if (gameState === 'game') {
         return (
             <div className="min-h-screen bg-gradient-to-br from-green-500 via-blue-500 to-purple-500 p-8">
@@ -229,6 +291,10 @@ export default function MultiPlayer() {
                                 timerDuration={60}
                                 onGameStart={handleGameStart}
                                 onGameOver={handleGameOver}
+                                isMultiplayer={true}
+                                serverControlledTimer={gameTimer}
+                                gameActive={isGameActive}
+                                onServerGameOver={handleServerGameOver}
                             />
                         </div>
                     )}
@@ -243,6 +309,44 @@ export default function MultiPlayer() {
         );
     }
 
+    if (gameState === 'results') {
+        return (
+            <div className="min-h-screen bg-gradient-to-br from-green-500 via-blue-500 to-purple-500 p-8">
+                <div className="max-w-4xl mx-auto">
+                    <div className="text-center mb-8">
+                        <h1 className="text-4xl font-bold text-white mb-4">Game Results</h1>
+                        <button
+                            onClick={handleBackToLobby}
+                            className="text-white/80 hover:text-white underline"
+                        >
+                            ← Back to Lobby
+                        </button>
+                    </div>
+                    
+                    <div className="bg-white/95 backdrop-blur-sm rounded-2xl p-8 shadow-2xl">
+                        <h2 className="text-3xl font-bold text-center mb-6 text-gray-800">Time's Up!</h2>
+                        {gameResults && (
+                            <div className="text-center mb-4">
+                                <p className="text-gray-600">Room: {gameResults.roomId}</p>
+                                <p className="text-gray-600">{gameResults.players.length} players participated</p>
+                            </div>
+                        )}
+                        <p className="text-center text-gray-600 mb-4">Detailed results will be displayed here once implemented.</p>
+                        
+                        <div className="text-center">
+                            <button
+                                onClick={handleBackToLobby}
+                                className="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-3 px-6 rounded-xl"
+                            >
+                                Play Again
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+    
     return (
         <div className="min-h-screen bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 p-8">
             <div className="max-w-6xl mx-auto">

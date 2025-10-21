@@ -117,6 +117,62 @@ class WebSocketService {
     return subscription;
   }
 
+  subscribeToCountdown(roomId: string, callback: (countdown: number) => void) {
+    if (!this.client || !this.isConnected) {
+      throw new Error('WebSocket not connected');
+    }
+
+    const subscription = this.client.subscribe(`/topic/room/${roomId}/countdown`, (message) => {
+      const countdown: number = JSON.parse(message.body);
+      callback(countdown);
+    });
+    
+    this.subscriptions.push(subscription);
+    return subscription;
+  }
+
+  subscribeToGameTimer(roomId: string, callback: (timeLeft: number) => void) {
+    if (!this.client || !this.isConnected) {
+      throw new Error('WebSocket not connected');
+    }
+
+    const subscription = this.client.subscribe(`/topic/room/${roomId}/gameTimer`, (message) => {
+      const timeLeft: number = JSON.parse(message.body);
+      callback(timeLeft);
+    });
+    
+    this.subscriptions.push(subscription);
+    return subscription;
+  }
+
+  subscribeToGameStarted(roomId: string, callback: (room: GameRoom) => void) {
+    if (!this.client || !this.isConnected) {
+      throw new Error('WebSocket not connected');
+    }
+
+    const subscription = this.client.subscribe(`/topic/room/${roomId}/gameStarted`, (message) => {
+      const room: GameRoom = JSON.parse(message.body);
+      callback(room);
+    });
+    
+    this.subscriptions.push(subscription);
+    return subscription;
+  }
+
+  subscribeToGameEnded(roomId: string, callback: (room: GameRoom) => void) {
+    if (!this.client || !this.isConnected) {
+      throw new Error('WebSocket not connected');
+    }
+
+    const subscription = this.client.subscribe(`/topic/room/${roomId}/gameEnded`, (message) => {
+      const room: GameRoom = JSON.parse(message.body);
+      callback(room);
+    });
+    
+    this.subscriptions.push(subscription);
+    return subscription;
+  }
+
   sendChatMessage(roomId: string, playerId: string, playerName: string, messageText: string) {
     if (!this.client || !this.isConnected) {
       throw new Error('WebSocket not connected');
