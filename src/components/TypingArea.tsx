@@ -11,6 +11,9 @@ interface TypingAreaProps {
   serverControlledTimer?: number;
   gameActive?: boolean;
   onServerGameOver?: () => void;
+  // Optional props for content customization
+  includePunctuation?: boolean;
+  includeNumbers?: boolean;
 }
 
 function TypingArea({ 
@@ -21,7 +24,9 @@ function TypingArea({
   isMultiplayer = false,
   serverControlledTimer,
   gameActive = false,
-  onServerGameOver
+  onServerGameOver,
+  includePunctuation = false,
+  includeNumbers = false
 }: TypingAreaProps) {
   const [typedCharacters, setTypedCharacters] = useState('');
   const [correctChars, setCorrectChars] = useState(0);
@@ -136,8 +141,13 @@ function TypingArea({
         setIsLoading(true);
         setError(null);
         try {
-          // REST API call instead of NATS
-          const res = await fetch(`/api/game/next?wordCount=${wordsToPrefetch}`);
+          // REST API call with punctuation and numbers parameters
+          const params = new URLSearchParams({
+            wordCount: wordsToPrefetch.toString(),
+            punctuation: includePunctuation.toString(),
+            numbers: includeNumbers.toString()
+          });
+          const res = await fetch(`/api/game/next?${params}`);
           if (!res.ok) throw new Error('Failed to fetch next words from backend.');
           const quoteData = await res.json();
           setFullQuote((prevQuote) => prevQuote + " " + quoteData.text);
@@ -150,7 +160,7 @@ function TypingArea({
       };
       fetchMoreWords();
     }
-  }, [typedCharacters, fullQuote, gameStarted, isLoading, gameOver, wordsToPrefetch]);
+  }, [typedCharacters, fullQuote, gameStarted, isLoading, gameOver, wordsToPrefetch, includePunctuation, includeNumbers]);
 
   // Handle server-controlled game over for multiplayer
   useEffect(() => {

@@ -12,6 +12,8 @@ export default function SinglePlayer() {
   const [gameOver, setGameOver] = useState(false);
   const [correctChars, setCorrectChars] = useState(0);
   const [incorrectChars, setIncorrectChars] = useState(0);
+  const [includePunctuation, setIncludePunctuation] = useState(false);
+  const [includeNumbers, setIncludeNumbers] = useState(false);
 
   const handleSessionReceived = useCallback((newSessionId: string, newQuote: string) => {
     setSessionId(newSessionId);
@@ -21,6 +23,26 @@ export default function SinglePlayer() {
 
   const handleTimerSelect = (duration: number) => {
     setTimerDuration(duration);
+  };
+  
+  const handlePunctuationToggle = () => {
+    if (!gameActive && !gameOver) {
+      setIncludePunctuation(!includePunctuation);
+      // Reset to get new quote with updated settings
+      setSessionId(null);
+      setQuote('');
+      setQuoteFetched(false);
+    }
+  };
+  
+  const handleNumbersToggle = () => {
+    if (!gameActive && !gameOver) {
+      setIncludeNumbers(!includeNumbers);
+      // Reset to get new quote with updated settings
+      setSessionId(null);
+      setQuote('');
+      setQuoteFetched(false);
+    }
   };
 
   const handleGameStart = () => {
@@ -42,6 +64,9 @@ export default function SinglePlayer() {
     setGameOver(false);
     setCorrectChars(0);
     setIncorrectChars(0);
+    // Reset toggles to defaults
+    setIncludePunctuation(false);
+    setIncludeNumbers(false);
   }, []);
 
   useEffect(() => {
@@ -59,30 +84,53 @@ export default function SinglePlayer() {
     <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
       {!quoteFetched && (
         <div>
-          <Quote onSessionReceived={handleSessionReceived} />
+          <Quote 
+            onSessionReceived={handleSessionReceived} 
+            includePunctuation={includePunctuation}
+            includeNumbers={includeNumbers}
+          />
         </div>
       )}
 
       {quoteFetched && !gameActive && !gameOver && (
-        <div className="flex space-x-4 mb-4">
-          <button
-            className={`text-black ${timerDuration === 15 ? 'underline' : ''}`}
-            onClick={() => handleTimerSelect(15)}
-          >
-            15s
-          </button>
-          <button
-            className={`text-black ${timerDuration === 30 ? 'underline' : ''}`}
-            onClick={() => handleTimerSelect(30)}
-          >
-            30s
-          </button>
-          <button
-            className={`text-black ${timerDuration === 60 ? 'underline' : ''}`}
-            onClick={() => handleTimerSelect(60)}
-          >
-            60s
-          </button>
+        <div className="flex flex-col items-center space-y-4 mb-4">
+          {/* Content Options */}
+          <div className="flex space-x-6">
+            <button
+              className={`text-black ${includePunctuation ? 'underline' : ''}`}
+              onClick={handlePunctuationToggle}
+            >
+              punctuation
+            </button>
+            <button
+              className={`text-black ${includeNumbers ? 'underline' : ''}`}
+              onClick={handleNumbersToggle}
+            >
+              numbers
+            </button>
+          </div>
+          
+          {/* Timer Options */}
+          <div className="flex space-x-4">
+            <button
+              className={`text-black ${timerDuration === 15 ? 'underline' : ''}`}
+              onClick={() => handleTimerSelect(15)}
+            >
+              15s
+            </button>
+            <button
+              className={`text-black ${timerDuration === 30 ? 'underline' : ''}`}
+              onClick={() => handleTimerSelect(30)}
+            >
+              30s
+            </button>
+            <button
+              className={`text-black ${timerDuration === 60 ? 'underline' : ''}`}
+              onClick={() => handleTimerSelect(60)}
+            >
+              60s
+            </button>
+          </div>
         </div>
       )}
 
@@ -93,6 +141,8 @@ export default function SinglePlayer() {
             timerDuration={timerDuration}
             onGameStart={handleGameStart}
             onGameOver={handleGameOver}
+            includePunctuation={includePunctuation}
+            includeNumbers={includeNumbers}
           />
         </div>
       )}

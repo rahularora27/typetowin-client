@@ -225,76 +225,52 @@ export default function MultiPlayer() {
 
     if (gameState === 'room') {
         return (
-            <div className="min-h-screen bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 p-8">
-                <div className="max-w-6xl mx-auto">
-                    {/* Header */}
-                    <div className="text-center mb-8">
-                        <h1 className="text-4xl font-bold text-white mb-4 drop-shadow-lg">
-                            Game Room
-                        </h1>
+            <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
+                <div className="text-center mb-6">
+                    <h1 className="text-4xl font-bold text-black mb-4">
+                        Game Room
+                    </h1>
+                    <button
+                        onClick={handleBackToLobby}
+                        className="text-black underline hover:no-underline"
+                    >
+                        ← Back to Lobby
+                    </button>
+                </div>
+                
+                {/* Timer Selection */}
+                {!currentRoom?.gameStarted && (
+                    <div className="flex space-x-4 mb-6">
                         <button
-                            onClick={handleBackToLobby}
-                            className="text-white/80 hover:text-white underline"
+                            className={`text-black ${timerDuration === 15 ? 'underline' : ''} ${
+                                currentPlayer?.isOwner ? 'cursor-pointer' : 'cursor-default'
+                            }`}
+                            onClick={currentPlayer?.isOwner ? () => handleTimerSelect(15) : undefined}
                         >
-                            ← Back to Lobby
+                            15s
+                        </button>
+                        <button
+                            className={`text-black ${timerDuration === 30 ? 'underline' : ''} ${
+                                currentPlayer?.isOwner ? 'cursor-pointer' : 'cursor-default'
+                            }`}
+                            onClick={currentPlayer?.isOwner ? () => handleTimerSelect(30) : undefined}
+                        >
+                            30s
+                        </button>
+                        <button
+                            className={`text-black ${timerDuration === 60 ? 'underline' : ''} ${
+                                currentPlayer?.isOwner ? 'cursor-pointer' : 'cursor-default'
+                            }`}
+                            onClick={currentPlayer?.isOwner ? () => handleTimerSelect(60) : undefined}
+                        >
+                            60s
                         </button>
                     </div>
-                    
-                    {/* Timer Selection - Only for Room Owner */}
-                    {currentPlayer?.isOwner && !currentRoom?.gameStarted && (
-                        <div className="text-center mb-8">
-                            <div className="bg-white/95 backdrop-blur-sm rounded-2xl p-6 shadow-2xl border border-white/20 inline-block">
-                                <h3 className="text-lg font-semibold text-gray-800 mb-4">Select Game Duration</h3>
-                                <div className="flex space-x-4">
-                                    <button
-                                        className={`px-6 py-3 font-semibold rounded-xl transition-all duration-300 ${
-                                            timerDuration === 15
-                                                ? 'bg-indigo-500 text-white shadow-lg'
-                                                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                                        }`}
-                                        onClick={() => handleTimerSelect(15)}
-                                    >
-                                        15s
-                                    </button>
-                                    <button
-                                        className={`px-6 py-3 font-semibold rounded-xl transition-all duration-300 ${
-                                            timerDuration === 30
-                                                ? 'bg-indigo-500 text-white shadow-lg'
-                                                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                                        }`}
-                                        onClick={() => handleTimerSelect(30)}
-                                    >
-                                        30s
-                                    </button>
-                                    <button
-                                        className={`px-6 py-3 font-semibold rounded-xl transition-all duration-300 ${
-                                            timerDuration === 60
-                                                ? 'bg-indigo-500 text-white shadow-lg'
-                                                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                                        }`}
-                                        onClick={() => handleTimerSelect(60)}
-                                    >
-                                        60s
-                                    </button>
-                                </div>
-                                <p className="text-sm text-gray-600 mt-3">Current: {timerDuration} seconds</p>
-                            </div>
-                        </div>
-                    )}
-                    
-                    {/* Timer Display for Non-Owners */}
-                    {!currentPlayer?.isOwner && !currentRoom?.gameStarted && (
-                        <div className="text-center mb-8">
-                            <div className="bg-white/95 backdrop-blur-sm rounded-2xl p-4 shadow-lg border border-white/20 inline-block">
-                                <p className="text-gray-700">
-                                    <span className="font-semibold">Game Duration:</span> {timerDuration} seconds
-                                </p>
-                            </div>
-                        </div>
-                    )}
+                )}
 
-                    {/* Room Content */}
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                {/* Room Content */}
+                <div className="w-full max-w-4xl">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                         {/* Player List */}
                         <div>
                             <PlayerList
@@ -323,17 +299,15 @@ export default function MultiPlayer() {
 
     if (gameState === 'countdown') {
         return (
-            <div className="min-h-screen bg-gradient-to-br from-yellow-500 via-orange-500 to-red-500 flex items-center justify-center p-8">
-                <div className="max-w-2xl mx-auto text-center">
-                    <div className="bg-white/95 backdrop-blur-sm rounded-2xl p-12 shadow-2xl">
-                        <h1 className="text-6xl font-bold text-gray-800 mb-8">Get Ready!</h1>
-                        <div className="text-9xl font-bold text-orange-500 mb-8 animate-pulse">
-                            {countdown > 0 ? countdown : 'GO!'}
-                        </div>
-                        <p className="text-xl text-gray-600">
-                            {countdown > 0 ? 'Game starting in...' : 'Start typing now!'}
-                        </p>
+            <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
+                <div className="text-center">
+                    <h1 className="text-4xl font-bold text-black mb-8">Get Ready!</h1>
+                    <div className="text-8xl font-bold text-black mb-8">
+                        {countdown > 0 ? countdown : 'GO!'}
                     </div>
+                    <p className="text-xl text-black">
+                        {countdown > 0 ? 'Game starting in...' : 'Start typing now!'}
+                    </p>
                 </div>
             </div>
         );
@@ -341,74 +315,55 @@ export default function MultiPlayer() {
     
     if (gameState === 'game') {
         return (
-            <div className="min-h-screen bg-gradient-to-br from-green-500 via-blue-500 to-purple-500 p-8">
-                <div className="max-w-6xl mx-auto">
-                    <div className="text-center mb-8">
-                        <h1 className="text-4xl font-bold text-white mb-4">Multiplayer Game</h1>
-                        <button
-                            onClick={handleBackToLobby}
-                            className="text-white/80 hover:text-white underline"
-                        >
-                            ← Back to Lobby
-                        </button>
+            <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
+                {currentRoom?.quote && (
+                    <div className="w-full max-w-6xl p-6 rounded-lg">
+                        <TypingArea
+                            initialQuote={currentRoom.quote}
+                            timerDuration={timerDuration}
+                            onGameStart={handleGameStart}
+                            onGameOver={handleGameOver}
+                            isMultiplayer={true}
+                            serverControlledTimer={gameTimer}
+                            gameActive={isGameActive}
+                            onServerGameOver={handleServerGameOver}
+                        />
                     </div>
-                    
-                    {currentRoom?.quote && (
-                        <div className="bg-white/95 backdrop-blur-sm rounded-2xl p-8 shadow-2xl">
-                            <TypingArea
-                                initialQuote={currentRoom.quote}
-                                timerDuration={timerDuration}
-                                onGameStart={handleGameStart}
-                                onGameOver={handleGameOver}
-                                isMultiplayer={true}
-                                serverControlledTimer={gameTimer}
-                                gameActive={isGameActive}
-                                onServerGameOver={handleServerGameOver}
-                            />
-                        </div>
-                    )}
-                    
-                    {!currentRoom?.quote && (
-                        <div className="bg-white/95 backdrop-blur-sm rounded-2xl p-8 shadow-2xl text-center">
-                            <p className="text-2xl text-gray-800">Loading game...</p>
-                        </div>
-                    )}
-                </div>
+                )}
+                
+                {!currentRoom?.quote && (
+                    <div className="text-center">
+                        <p className="text-2xl text-black">Loading game...</p>
+                    </div>
+                )}
             </div>
         );
     }
 
     if (gameState === 'results') {
         return (
-            <div className="min-h-screen bg-gradient-to-br from-green-500 via-blue-500 to-purple-500 p-8">
-                <div className="max-w-4xl mx-auto">
-                    <div className="text-center mb-8">
-                        <h1 className="text-4xl font-bold text-white mb-4">Game Results</h1>
-                        <button
-                            onClick={handleBackToLobby}
-                            className="text-white/80 hover:text-white underline"
-                        >
-                            ← Back to Lobby
-                        </button>
-                    </div>
-                    
-                    <div className="bg-white/95 backdrop-blur-sm rounded-2xl p-8 shadow-2xl">
-                        <h2 className="text-3xl font-bold text-center mb-6 text-gray-800">Time's Up!</h2>
+            <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
+                <div className="w-full max-w-3xl p-6 rounded-lg flex flex-col items-center">
+                    <div className="text-center mb-6">
+                        <h2 className="text-2xl font-bold mb-4">Game Over!</h2>
                         {gameResults && (
-                            <div className="text-center mb-4">
-                                <p className="text-gray-600">Room: {gameResults.roomId}</p>
-                                <p className="text-gray-600">{gameResults.players.length} players participated</p>
+                            <div className="mb-4">
+                                <p className="text-gray-700">Room: {gameResults.roomId}</p>
+                                <p className="text-gray-700">{gameResults.players.length} players participated</p>
                             </div>
                         )}
-                        <p className="text-center text-gray-600 mb-4">Detailed results will be displayed here once implemented.</p>
+                        <p className="text-gray-700 mb-4">Detailed results will be displayed here once implemented.</p>
                         
-                        <div className="text-center">
+                        <div className="space-y-2">
                             <button
                                 onClick={handleBackToLobby}
-                                className="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-3 px-6 rounded-xl"
+                                className="bg-black text-white py-2 px-4 rounded hover:bg-gray-800"
                             >
                                 Play Again
                             </button>
+                            <div className="text-gray-500 text-sm">
+                                or click the button above
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -417,104 +372,86 @@ export default function MultiPlayer() {
     }
     
     return (
-        <div className="min-h-screen bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 p-8">
-            <div className="max-w-6xl mx-auto">
-                {/* Header */}
-                <div className="text-center mb-12">
-                    <h1 className="text-5xl font-bold text-white mb-4 drop-shadow-lg">
-                        MultiPlayer
-                    </h1>
-                    <p className="text-xl text-white/90 font-light">
-                        Connect with friends and start playing together
-                    </p>
+        <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
+            <div className="text-center mb-8">
+                <h1 className="text-4xl font-bold text-black mb-4">
+                    MultiPlayer
+                </h1>
+            </div>
+
+            {/* Error Message */}
+            {error && (
+                <div className="mb-6 p-4 bg-red-100 border border-red-400 text-red-700 rounded">
+                    {error}
+                </div>
+            )}
+            
+            {/* Create and Join Forms */}
+            <div className="flex flex-col lg:flex-row gap-8">
+                {/* Create Room Section */}
+                <div className="bg-white p-6 rounded border">
+                    <h2 className="text-xl font-semibold text-black mb-4 text-center">
+                        Create Room
+                    </h2>
+                    
+                    <div className="space-y-4">
+                        <div>
+                            <input
+                                type="text"
+                                value={createName}
+                                onChange={(e) => setCreateName(e.target.value)}
+                                placeholder="Your name"
+                                className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:border-black"
+                                disabled={loading}
+                            />
+                        </div>
+                        
+                        <button 
+                            onClick={handleCreateRoom}
+                            disabled={loading}
+                            className="w-full bg-black text-white py-2 px-4 rounded hover:bg-gray-800 disabled:bg-gray-400"
+                        >
+                            {loading ? 'Creating...' : 'Create Room'}
+                        </button>
+                    </div>
                 </div>
 
-                {/* Error Message */}
-                {error && (
-                    <div className="max-w-md mx-auto mb-6 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg">
-                        {error}
-                    </div>
-                )}
-                
-                {/* Sections Container */}
-                <div className="flex flex-col lg:flex-row gap-8 justify-center items-start">
-                    {/* Create Room Section */}
-                    <div className="flex-1 max-w-md w-full bg-white/95 backdrop-blur-sm rounded-2xl p-8 shadow-2xl border border-white/20">
-                        <h2 className="text-2xl font-semibold text-gray-800 text-center mb-6">
-                            🎮 Create Room
-                        </h2>
-                        
-                        <div className="space-y-6">
-                            <div>
-                                <label htmlFor="create-name" className="block text-sm font-medium text-gray-700 mb-2">
-                                    Your Name
-                                </label>
-                                <input
-                                    id="create-name"
-                                    type="text"
-                                    value={createName}
-                                    onChange={(e) => setCreateName(e.target.value)}
-                                    placeholder="Enter your name"
-                                    className="w-full px-4 py-3 bg-gray-50 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-indigo-500 focus:bg-white transition-all duration-300 text-gray-800 placeholder-gray-400"
-                                    disabled={loading}
-                                />
-                            </div>
-                            
-                            <button 
-                                onClick={handleCreateRoom}
+                {/* Join Room Section */}
+                <div className="bg-white p-6 rounded border">
+                    <h2 className="text-xl font-semibold text-black mb-4 text-center">
+                        Join Room
+                    </h2>
+                    
+                    <div className="space-y-4">
+                        <div>
+                            <input
+                                type="text"
+                                value={joinName}
+                                onChange={(e) => setJoinName(e.target.value)}
+                                placeholder="Your name"
+                                className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:border-black"
                                 disabled={loading}
-                                className="w-full bg-indigo-500 hover:bg-indigo-600 disabled:bg-gray-400 text-white font-semibold py-3 px-6 rounded-xl transition-all duration-300 transform hover:-translate-y-1 hover:shadow-lg uppercase tracking-wide disabled:transform-none"
-                            >
-                                {loading ? 'Creating...' : 'Create Room'}
-                            </button>
+                            />
                         </div>
-                    </div>
-
-                    {/* Join Room Section */}
-                    <div className="flex-1 max-w-md w-full bg-white/95 backdrop-blur-sm rounded-2xl p-8 shadow-2xl border border-white/20">
-                        <h2 className="text-2xl font-semibold text-gray-800 text-center mb-6">
-                            🚪 Join Room
-                        </h2>
                         
-                        <div className="space-y-6">
-                            <div>
-                                <label htmlFor="join-name" className="block text-sm font-medium text-gray-700 mb-2">
-                                    Your Name
-                                </label>
-                                <input
-                                    id="join-name"
-                                    type="text"
-                                    value={joinName}
-                                    onChange={(e) => setJoinName(e.target.value)}
-                                    placeholder="Enter your name"
-                                    className="w-full px-4 py-3 bg-gray-50 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-purple-500 focus:bg-white transition-all duration-300 text-gray-800 placeholder-gray-400"
-                                    disabled={loading}
-                                />
-                            </div>
-                            
-                            <div>
-                                <label htmlFor="room-id" className="block text-sm font-medium text-gray-700 mb-2">
-                                    Room ID
-                                </label>
-                                <input
-                                    id="room-id"
-                                    type="text"
-                                    value={roomId}
-                                    onChange={(e) => setRoomId(e.target.value)}
-                                    placeholder="Enter room ID"
-                                    className="w-full px-4 py-3 bg-gray-50 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-purple-500 focus:bg-white transition-all duration-300 text-gray-800 placeholder-gray-400"
-                                    disabled={loading}
-                                />
-                            </div>
-                            
-                            <button 
-                                onClick={handleJoinRoom}
+                        <div>
+                            <input
+                                type="text"
+                                value={roomId}
+                                onChange={(e) => setRoomId(e.target.value)}
+                                placeholder="Room ID"
+                                className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:border-black"
                                 disabled={loading}
-                                className="w-full bg-purple-500 hover:bg-purple-600 disabled:bg-gray-400 text-white font-semibold py-3 px-6 rounded-xl transition-all duration-300 transform hover:-translate-y-1 hover:shadow-lg uppercase tracking-wide disabled:transform-none"
-                            >
-                                {loading ? 'Joining...' : 'Join Room'}
-                            </button>
+                            />
                         </div>
+                        
+                        <button 
+                            onClick={handleJoinRoom}
+                            disabled={loading}
+                            className="w-full bg-black text-white py-2 px-4 rounded hover:bg-gray-800 disabled:bg-gray-400"
+                        >
+                            {loading ? 'Joining...' : 'Join Room'}
+                        </button>
                     </div>
                 </div>
             </div>
