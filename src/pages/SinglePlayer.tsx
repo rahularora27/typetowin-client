@@ -14,6 +14,8 @@ export default function SinglePlayer() {
   const [incorrectChars, setIncorrectChars] = useState(0);
   const [includePunctuation, setIncludePunctuation] = useState(false);
   const [includeNumbers, setIncludeNumbers] = useState(false);
+  const [showCustomTimeInput, setShowCustomTimeInput] = useState(false);
+  const [customTimeValue, setCustomTimeValue] = useState('');
 
   const handleSessionReceived = useCallback((newSessionId: string, newQuote: string) => {
     setSessionId(newSessionId);
@@ -23,6 +25,9 @@ export default function SinglePlayer() {
 
   const handleTimerSelect = (duration: number) => {
     setTimerDuration(duration);
+    if (!gameOver) {
+      setGameActive(false);
+    }
   };
   
   const handlePunctuationToggle = () => {
@@ -43,6 +48,28 @@ export default function SinglePlayer() {
       setQuote('');
       setQuoteFetched(false);
     }
+  };
+  
+  const handleCustomTimeClick = () => {
+    setShowCustomTimeInput(true);
+  };
+  
+  const handleCustomTimeSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const time = parseInt(customTimeValue);
+    if (!isNaN(time) && time > 0 && time <= 300) { // Max 5 minutes
+      setTimerDuration(time);
+      if (!gameOver) {
+        setGameActive(false);
+      }
+      setShowCustomTimeInput(false);
+      setCustomTimeValue('');
+    }
+  };
+  
+  const handleCustomTimeCancel = () => {
+    setShowCustomTimeInput(false);
+    setCustomTimeValue('');
   };
 
   const handleGameStart = () => {
@@ -75,10 +102,13 @@ export default function SinglePlayer() {
         event.preventDefault();
         handleRestart();
       }
+      if (event.key === "Escape" && showCustomTimeInput) {
+        handleCustomTimeCancel();
+      }
     };
     window.addEventListener("keydown", handleTabRestart);
     return () => window.removeEventListener("keydown", handleTabRestart);
-  }, [handleRestart]);
+  }, [handleRestart, showCustomTimeInput]);
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
@@ -111,7 +141,7 @@ export default function SinglePlayer() {
           </div>
           
           {/* Timer Options */}
-          <div className="flex space-x-4">
+          <div className="flex space-x-4 items-center">
             <button
               className={`text-black ${timerDuration === 15 ? 'underline' : ''}`}
               onClick={() => handleTimerSelect(15)}
@@ -129,6 +159,13 @@ export default function SinglePlayer() {
               onClick={() => handleTimerSelect(60)}
             >
               60s
+            </button>
+            
+            <button
+              className={`text-black ${timerDuration !== 15 && timerDuration !== 30 && timerDuration !== 60 ? 'underline' : ''}`}
+              onClick={handleCustomTimeClick}
+            >
+              custom
             </button>
           </div>
         </div>
@@ -152,6 +189,44 @@ export default function SinglePlayer() {
           <Results correctChars={correctChars} incorrectChars={incorrectChars} />
           <div className="mt-2 text-gray-500 text-sm">
             Press <kbd>Tab</kbd> to restart
+          </div>
+        </div>
+      )}
+      
+      {/* Custom Time Popup */}
+      {showCustomTimeInput && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded border border-gray-300 shadow-lg">
+            <h3 className="text-lg font-semibold text-black mb-4">Custom Time</h3>
+            <form onSubmit={handleCustomTimeSubmit}>
+              <div className="mb-4">
+                <input
+                  type="number"
+                  value={customTimeValue}
+                  onChange={(e) => setCustomTimeValue(e.target.value)}
+                  placeholder="Enter seconds (1-300)"
+                  min="1"
+                  max="300"
+                  className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:border-black"
+                  autoFocus
+                />
+              </div>
+              <div className="flex space-x-3 justify-end">
+                <button
+                  type="button"
+                  onClick={handleCustomTimeCancel}
+                  className="px-4 py-2 text-black hover:underline"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-black text-white rounded hover:bg-gray-800"
+                >
+                  OK
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
