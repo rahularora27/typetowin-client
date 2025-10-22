@@ -14,6 +14,9 @@ interface TypingAreaProps {
   // Optional props for content customization
   includePunctuation?: boolean;
   includeNumbers?: boolean;
+  // Optional props for game mode
+  gameMode?: 'timer' | 'words';
+  targetWordCount?: number;
 }
 
 function TypingArea({ 
@@ -26,7 +29,9 @@ function TypingArea({
   gameActive = false,
   onServerGameOver,
   includePunctuation = false,
-  includeNumbers = false
+  includeNumbers = false,
+  gameMode = 'timer',
+  targetWordCount = 10
 }: TypingAreaProps) {
   const [typedCharacters, setTypedCharacters] = useState('');
   const [correctChars, setCorrectChars] = useState(0);
@@ -135,15 +140,50 @@ function TypingArea({
     setCorrectChars(correct);
     setIncorrectChars(incorrect);
 
+    // Check if we've completed the target word count in word mode
+    if (gameMode === 'words' && gameStarted && !gameOver) {
+      const typedText = typedCharacters.slice(0, fullQuote.length);
+      const wordsCompleted = typedText.trim().split(/\s+/).filter(word => word.length > 0).length;
+      
+      // Check if the last character typed is a space (word boundary) and we've reached target
+      if (typedCharacters.length > 0 && 
+          typedCharacters[typedCharacters.length - 1] === ' ' && 
+          wordsCompleted >= targetWordCount) {
+        setGameOver(true);
+        onGameOver(correct, incorrect);
+        return;
+      }
+    }
+
+    // Prefetch more words if needed
     const remainingChars = fullQuote.length - typedCharacters.length;
-    if (remainingChars < 20 && gameStarted && !isLoading && !gameOver) {
+    
+    // In word mode: only prefetch if we need more words than we have
+    // In timer mode: always prefetch when running low
+    const shouldPrefetch = gameMode === 'timer' 
+      ? remainingChars < 20 
+      : (() => {
+          // For word mode, count words in the quote
+          const totalWords = fullQuote.trim().split(/\s+/).filter(w => w.length > 0).length;
+          return totalWords < targetWordCount && remainingChars < 20;
+        })();
+    
+    if (shouldPrefetch && gameStarted && !isLoading && !gameOver) {
       const fetchMoreWords = async () => {
         setIsLoading(true);
         setError(null);
         try {
+          // In word mode, calculate how many more words we need
+          let wordsToFetch = wordsToPrefetch;
+          if (gameMode === 'words') {
+            const currentWords = fullQuote.trim().split(/\s+/).filter(w => w.length > 0).length;
+            const wordsNeeded = targetWordCount - currentWords;
+            wordsToFetch = Math.min(wordsToPrefetch, wordsNeeded);
+          }
+          
           // REST API call with punctuation and numbers parameters
           const params = new URLSearchParams({
-            wordCount: wordsToPrefetch.toString(),
+            wordCount: wordsToFetch.toString(),
             punctuation: includePunctuation.toString(),
             numbers: includeNumbers.toString()
           });
@@ -160,7 +200,7 @@ function TypingArea({
       };
       fetchMoreWords();
     }
-  }, [typedCharacters, fullQuote, gameStarted, isLoading, gameOver, wordsToPrefetch, includePunctuation, includeNumbers]);
+  }, [typedCharacters, fullQuote, gameStarted, isLoading, gameOver, wordsToPrefetch, includePunctuation, includeNumbers, gameMode, targetWordCount, onGameOver]);
 
   // Handle server-controlled game over for multiplayer
   useEffect(() => {
@@ -184,20 +224,27 @@ function TypingArea({
     }
   }, [gameOver, onGameOver, isMultiplayer]);
 
+  // Calculate words completed for word mode display
+  const wordsCompleted = typedCharacters.trim().split(/\s+/).filter(word => word.length > 0).length;
+
   return (
     <div>
       {error && <p className="text-red-500">{error}</p>}
       <p className="text-gray-700 text-4xl">
-        {isMultiplayer && serverControlledTimer !== undefined ? (
+        {gameMode === 'words' ? (
+          <span>{wordsCompleted} / {targetWordCount}</span>
+        ) : isMultiplayer && serverControlledTimer !== undefined ? (
           <span>{serverControlledTimer}</span>
         ) : (
-          <Timer
-            duration={timerDuration}
-            isRunning={gameStarted && !gameOver}
-            onExpire={handleExpire}
-          />
+          <>
+            <Timer
+              duration={timerDuration}
+              isRunning={gameStarted && !gameOver}
+              onExpire={handleExpire}
+            />
+            s
+          </>
         )}
-        s
       </p>
       <div className="text-3xl font-mono tracking-wide relative">
         {fullQuote.split('').map((char, index) => {

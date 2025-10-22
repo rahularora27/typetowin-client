@@ -6,7 +6,9 @@ import Results from "../components/Results";
 export default function SinglePlayer() {
   const [_sessionId, setSessionId] = useState<string | null>(null);
   const [quote, setQuote] = useState<string>('');
+  const [gameMode, setGameMode] = useState<'timer' | 'words'>('timer');
   const [timerDuration, setTimerDuration] = useState(30);
+  const [wordCount, setWordCount] = useState(10);
   const [quoteFetched, setQuoteFetched] = useState(false);
   const [gameActive, setGameActive] = useState(false);
   const [gameOver, setGameOver] = useState(false);
@@ -16,12 +18,24 @@ export default function SinglePlayer() {
   const [includeNumbers, setIncludeNumbers] = useState(false);
   const [showCustomTimeInput, setShowCustomTimeInput] = useState(false);
   const [customTimeValue, setCustomTimeValue] = useState('');
+  const [showCustomWordInput, setShowCustomWordInput] = useState(false);
+  const [customWordValue, setCustomWordValue] = useState('');
 
   const handleSessionReceived = useCallback((newSessionId: string, newQuote: string) => {
     setSessionId(newSessionId);
     setQuote(newQuote);
     setQuoteFetched(true);
   }, []);
+
+  const handleModeSelect = (mode: 'timer' | 'words') => {
+    setGameMode(mode);
+    if (!gameOver) {
+      setGameActive(false);
+      setSessionId(null);
+      setQuote('');
+      setQuoteFetched(false);
+    }
+  };
 
   const handleTimerSelect = (duration: number) => {
     setTimerDuration(duration);
@@ -71,6 +85,43 @@ export default function SinglePlayer() {
     setShowCustomTimeInput(false);
     setCustomTimeValue('');
   };
+  
+  const handleWordCountSelect = (count: number) => {
+    setWordCount(count);
+    if (!gameOver) {
+      setGameActive(false);
+      // Reset to get new quote with updated word count
+      setSessionId(null);
+      setQuote('');
+      setQuoteFetched(false);
+    }
+  };
+  
+  const handleCustomWordClick = () => {
+    setShowCustomWordInput(true);
+  };
+  
+  const handleCustomWordSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const count = parseInt(customWordValue);
+    if (!isNaN(count) && count > 0 && count <= 500) { // Max 500 words
+      setWordCount(count);
+      if (!gameOver) {
+        setGameActive(false);
+        // Reset to get new quote with updated word count
+        setSessionId(null);
+        setQuote('');
+        setQuoteFetched(false);
+      }
+      setShowCustomWordInput(false);
+      setCustomWordValue('');
+    }
+  };
+  
+  const handleCustomWordCancel = () => {
+    setShowCustomWordInput(false);
+    setCustomWordValue('');
+  };
 
   const handleGameStart = () => {
     setGameActive(true);
@@ -105,10 +156,13 @@ export default function SinglePlayer() {
       if (event.key === "Escape" && showCustomTimeInput) {
         handleCustomTimeCancel();
       }
+      if (event.key === "Escape" && showCustomWordInput) {
+        handleCustomWordCancel();
+      }
     };
     window.addEventListener("keydown", handleTabRestart);
     return () => window.removeEventListener("keydown", handleTabRestart);
-  }, [handleRestart, showCustomTimeInput]);
+  }, [handleRestart, showCustomTimeInput, showCustomWordInput]);
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
@@ -118,6 +172,8 @@ export default function SinglePlayer() {
             onSessionReceived={handleSessionReceived} 
             includePunctuation={includePunctuation}
             includeNumbers={includeNumbers}
+            gameMode={gameMode}
+            wordCount={wordCount}
           />
         </div>
       )}
@@ -140,34 +196,83 @@ export default function SinglePlayer() {
             </button>
           </div>
           
-          {/* Timer Options */}
-          <div className="flex space-x-4 items-center">
+          {/* Game Mode Selection */}
+          <div className="flex space-x-6">
             <button
-              className={`text-black ${timerDuration === 15 ? 'underline' : ''}`}
-              onClick={() => handleTimerSelect(15)}
+              className={`text-black ${gameMode === 'timer' ? 'underline' : ''}`}
+              onClick={() => handleModeSelect('timer')}
             >
-              15s
+              timer
             </button>
             <button
-              className={`text-black ${timerDuration === 30 ? 'underline' : ''}`}
-              onClick={() => handleTimerSelect(30)}
+              className={`text-black ${gameMode === 'words' ? 'underline' : ''}`}
+              onClick={() => handleModeSelect('words')}
             >
-              30s
-            </button>
-            <button
-              className={`text-black ${timerDuration === 60 ? 'underline' : ''}`}
-              onClick={() => handleTimerSelect(60)}
-            >
-              60s
-            </button>
-            
-            <button
-              className={`text-black ${timerDuration !== 15 && timerDuration !== 30 && timerDuration !== 60 ? 'underline' : ''}`}
-              onClick={handleCustomTimeClick}
-            >
-              custom
+              words
             </button>
           </div>
+          
+          {/* Timer Options */}
+          {gameMode === 'timer' && (
+            <div className="flex space-x-4 items-center">
+              <button
+                className={`text-black ${timerDuration === 15 ? 'underline' : ''}`}
+                onClick={() => handleTimerSelect(15)}
+              >
+                15s
+              </button>
+              <button
+                className={`text-black ${timerDuration === 30 ? 'underline' : ''}`}
+                onClick={() => handleTimerSelect(30)}
+              >
+                30s
+              </button>
+              <button
+                className={`text-black ${timerDuration === 60 ? 'underline' : ''}`}
+                onClick={() => handleTimerSelect(60)}
+              >
+                60s
+              </button>
+              
+              <button
+                className={`text-black ${timerDuration !== 15 && timerDuration !== 30 && timerDuration !== 60 ? 'underline' : ''}`}
+                onClick={handleCustomTimeClick}
+              >
+                custom
+              </button>
+            </div>
+          )}
+          
+          {/* Word Count Options */}
+          {gameMode === 'words' && (
+            <div className="flex space-x-4 items-center">
+              <button
+                className={`text-black ${wordCount === 10 ? 'underline' : ''}`}
+                onClick={() => handleWordCountSelect(10)}
+              >
+                10
+              </button>
+              <button
+                className={`text-black ${wordCount === 25 ? 'underline' : ''}`}
+                onClick={() => handleWordCountSelect(25)}
+              >
+                25
+              </button>
+              <button
+                className={`text-black ${wordCount === 50 ? 'underline' : ''}`}
+                onClick={() => handleWordCountSelect(50)}
+              >
+                50
+              </button>
+              
+              <button
+                className={`text-black ${wordCount !== 10 && wordCount !== 25 && wordCount !== 50 ? 'underline' : ''}`}
+                onClick={handleCustomWordClick}
+              >
+                custom
+              </button>
+            </div>
+          )}
         </div>
       )}
 
@@ -180,6 +285,8 @@ export default function SinglePlayer() {
             onGameOver={handleGameOver}
             includePunctuation={includePunctuation}
             includeNumbers={includeNumbers}
+            gameMode={gameMode}
+            targetWordCount={wordCount}
           />
         </div>
       )}
@@ -215,6 +322,44 @@ export default function SinglePlayer() {
                 <button
                   type="button"
                   onClick={handleCustomTimeCancel}
+                  className="px-4 py-2 text-black hover:underline"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-black text-white rounded hover:bg-gray-800"
+                >
+                  OK
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+      
+      {/* Custom Word Count Popup */}
+      {showCustomWordInput && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded border border-gray-300 shadow-lg">
+            <h3 className="text-lg font-semibold text-black mb-4">Custom Word Count</h3>
+            <form onSubmit={handleCustomWordSubmit}>
+              <div className="mb-4">
+                <input
+                  type="number"
+                  value={customWordValue}
+                  onChange={(e) => setCustomWordValue(e.target.value)}
+                  placeholder="Enter word count (1-500)"
+                  min="1"
+                  max="500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:border-black"
+                  autoFocus
+                />
+              </div>
+              <div className="flex space-x-3 justify-end">
+                <button
+                  type="button"
+                  onClick={handleCustomWordCancel}
                   className="px-4 py-2 text-black hover:underline"
                 >
                   Cancel
