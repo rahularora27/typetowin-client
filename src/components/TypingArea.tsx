@@ -199,14 +199,24 @@ function TypingArea({
         )}
         s
       </p>
-      <div className="text-3xl font-mono tracking-wide">
+      <div className="text-3xl font-mono tracking-wide relative">
         {fullQuote.split('').map((char, index) => {
           let className = '';
+          
           if (index < typedCharacters.length) {
             className = typedCharacters[index] === char ? 'text-green-500' : 'text-red-500';
           }
+          
           return (
-            <span key={index} className={className}>
+            <span key={index} className={`${className} relative`}>
+              {/* Add cursor line before current character */}
+              {index === typedCharacters.length && !gameOver && (
+                <span 
+                  className={`absolute left-0 top-0 bottom-0 w-0.5 bg-black ${
+                    gameStarted ? 'animate-pulse' : 'animate-blink'
+                  }`} 
+                />
+              )}
               {char}
             </span>
           );
