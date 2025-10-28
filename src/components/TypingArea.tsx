@@ -17,6 +17,9 @@ interface TypingAreaProps {
   // Optional props for game mode
   gameMode?: 'timer' | 'words';
   targetWordCount?: number;
+  // Progress callbacks
+  onTimerTick?: (timeLeft: number) => void;
+  onWordsProgress?: (completed: number) => void;
 }
 
 function TypingArea({ 
@@ -31,7 +34,9 @@ function TypingArea({
   includePunctuation = false,
   includeNumbers = false,
   gameMode = 'timer',
-  targetWordCount = 10
+  targetWordCount = 10,
+  onTimerTick,
+  onWordsProgress
 }: TypingAreaProps) {
   const [typedCharacters, setTypedCharacters] = useState('');
   const [correctChars, setCorrectChars] = useState(0);
@@ -141,17 +146,22 @@ function TypingArea({
     setIncorrectChars(incorrect);
 
     // Check if we've completed the target word count in word mode
-    if (gameMode === 'words' && gameStarted && !gameOver) {
+    if (gameMode === 'words') {
       const typedText = typedCharacters.slice(0, fullQuote.length);
       const wordsCompleted = typedText.trim().split(/\s+/).filter(word => word.length > 0).length;
+
+      // Notify parent about progress
+      if (onWordsProgress) onWordsProgress(wordsCompleted);
       
-      // Check if the last character typed is a space (word boundary) and we've reached target
-      if (typedCharacters.length > 0 && 
-          typedCharacters[typedCharacters.length - 1] === ' ' && 
-          wordsCompleted >= targetWordCount) {
-        setGameOver(true);
-        onGameOver(correct, incorrect);
-        return;
+      // End game only when started and completed
+      if (gameStarted && !gameOver) {
+        if (typedCharacters.length > 0 && 
+            typedCharacters[typedCharacters.length - 1] === ' ' && 
+            wordsCompleted >= targetWordCount) {
+          setGameOver(true);
+          onGameOver(correct, incorrect);
+          return;
+        }
       }
     }
 
@@ -231,30 +241,8 @@ function TypingArea({
     <div className="relative w-full">
       {error && <p className="text-red-400 mb-4 text-center">{error}</p>}
       
-      {/* Container for timer and text */}
-      <div className="max-w-[1200px] mx-auto">
-        {/* Timer/Word Counter - Above text - Reserve space to prevent shift */}
-        <div className="text-[#e2b714] text-2xl font-medium mb-2 min-h-[28px]">
-          {gameStarted && !gameOver && (
-            <>
-              {gameMode === 'words' ? (
-                <div>
-                  <span>{wordsCompleted}</span>
-                  <span className="text-gray-600 text-lg"> / {targetWordCount}</span>
-                </div>
-              ) : isMultiplayer && serverControlledTimer !== undefined ? (
-                <span>{serverControlledTimer}</span>
-              ) : (
-                <Timer
-                  duration={timerDuration}
-                  isRunning={gameStarted && !gameOver}
-                  onExpire={handleExpire}
-                />
-              )}
-            </>
-          )}
-        </div>
-        
+      {/* Container for text */}
+      <div className="relative max-w-[1200px] mx-auto">
         {/* Typing Text - Larger Size - Centered */}
         <div className="text-3xl leading-relaxed font-mono relative text-center">
         {fullQuote.split('').map((char, index) => {
@@ -288,6 +276,18 @@ function TypingArea({
       </div>
       
       {isLoading && <p className="text-gray-600 text-sm mt-4 text-center">loading...</p>}
+
+      {/* Hidden timer instance to drive countdown and onExpire for singleplayer */}
+      {!isMultiplayer && (
+        <div className="hidden">
+          <Timer
+            duration={timerDuration}
+            isRunning={gameStarted && !gameOver}
+            onExpire={handleExpire}
+            onTick={onTimerTick}
+          />
+        </div>
+      )}
     </div>
   );
 }

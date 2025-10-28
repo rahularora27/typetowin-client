@@ -23,6 +23,8 @@ export default function SinglePlayer() {
   const [customTimeValue, setCustomTimeValue] = useState('');
   const [showCustomWordInput, setShowCustomWordInput] = useState(false);
   const [customWordValue, setCustomWordValue] = useState('');
+  const [timeLeft, setTimeLeft] = useState(timerDuration);
+  const [wordsCompleted, setWordsCompleted] = useState(0);
 
   const handleSessionReceived = useCallback((newSessionId: string, newQuote: string) => {
     setSessionId(newSessionId);
@@ -42,6 +44,7 @@ export default function SinglePlayer() {
 
   const handleTimerSelect = (duration: number) => {
     setTimerDuration(duration);
+    setTimeLeft(duration);
     if (!gameOver) {
       setGameActive(false);
     }
@@ -162,10 +165,12 @@ export default function SinglePlayer() {
     setGameOver(false);
     setCorrectChars(0);
     setIncorrectChars(0);
+    setTimeLeft(timerDuration);
+    setWordsCompleted(0);
     // Reset toggles to defaults
     setIncludePunctuation(false);
     setIncludeNumbers(false);
-  }, []);
+  }, [timerDuration]);
 
   useEffect(() => {
     const handleTabRestart = (event: KeyboardEvent) => {
@@ -216,21 +221,31 @@ export default function SinglePlayer() {
         </div>
       )}
 
-      {/* Show options box only when game is not active and not over */}
+      {/* Options/Timer bar area */}
       <div className="order-1 mb-3 min-h-[52px] w-full max-w-[1200px] flex items-center justify-center">
-        {quoteFetched && !gameActive && !gameOver && (
-          <OptionsBar
-            gameMode={gameMode}
-            includePunctuation={includePunctuation}
-            includeNumbers={includeNumbers}
-            timerDuration={timerDuration}
-            wordCount={wordCount}
-            onPunctuationToggle={handlePunctuationToggle}
-            onNumbersToggle={handleNumbersToggle}
-            onModeSelect={handleModeSelect}
-            onPrimaryOptionSelect={handlePrimaryOptionSelect}
-            onCustomPrimaryClick={handleCustomPrimaryClick}
-          />
+        {quoteFetched && !gameOver && (
+          !gameActive ? (
+            <OptionsBar
+              gameMode={gameMode}
+              includePunctuation={includePunctuation}
+              includeNumbers={includeNumbers}
+              timerDuration={timerDuration}
+              wordCount={wordCount}
+              onPunctuationToggle={handlePunctuationToggle}
+              onNumbersToggle={handleNumbersToggle}
+              onModeSelect={handleModeSelect}
+              onPrimaryOptionSelect={handlePrimaryOptionSelect}
+              onCustomPrimaryClick={handleCustomPrimaryClick}
+            />
+          ) : (
+            <div className="text-[#e2b714] text-2xl font-medium">
+              {gameMode === 'timer' ? (
+                <span>{timeLeft}</span>
+              ) : (
+                <span>{wordsCompleted} <span className="text-gray-500">/ {wordCount}</span></span>
+              )}
+            </div>
+          )
         )}
       </div>
 
@@ -247,6 +262,8 @@ export default function SinglePlayer() {
               gameMode={gameMode}
               targetWordCount={wordCount}
               gameActive={gameActive}
+              onTimerTick={setTimeLeft}
+              onWordsProgress={setWordsCompleted}
             />
           )}
         </div>
