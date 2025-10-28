@@ -20,6 +20,8 @@ interface TypingAreaProps {
   // Progress callbacks
   onTimerTick?: (timeLeft: number) => void;
   onWordsProgress?: (completed: number) => void;
+  // Block typing when modal/input is open
+  inputBlocked?: boolean;
 }
 
 function TypingArea({ 
@@ -36,7 +38,8 @@ function TypingArea({
   gameMode = 'timer',
   targetWordCount = 10,
   onTimerTick,
-  onWordsProgress
+  onWordsProgress,
+  inputBlocked = false
 }: TypingAreaProps) {
   const [typedCharacters, setTypedCharacters] = useState('');
   const [correctChars, setCorrectChars] = useState(0);
@@ -81,8 +84,14 @@ function TypingArea({
   useEffect(() => {
     if (gameOver) return; // Don't allow typing after game over
     if (isMultiplayer && !gameActive) return; // Don't allow typing in multiplayer if game not active
+    if (inputBlocked) return; // Block typing when a modal or input is focused
 
     const handleKeyDown = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement | null;
+      if (target) {
+        const isFormField = target.closest('input, textarea, select, [contenteditable="true"]');
+        if (isFormField) return;
+      }
       if (
         event.key === 'Shift' ||
         event.key === 'Control' ||
@@ -128,7 +137,7 @@ function TypingArea({
     return () => {
       document.removeEventListener('keydown', handleKeyDown);
     };
-  }, [startTime, onGameStart, fullQuote, typedCharacters.length, gameOver]);
+  }, [startTime, onGameStart, fullQuote, typedCharacters.length, gameOver, isMultiplayer, gameActive, inputBlocked]);
 
   // Update correct/incorrect chars and prefetch more words if needed
   useEffect(() => {

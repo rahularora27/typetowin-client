@@ -195,7 +195,7 @@ export default function SinglePlayer() {
       <nav className="flex items-center justify-between px-8 py-6">
         {/* Logo */}
         <div className="text-2xl font-bold text-[#e2b714]">
-          t2w
+          type2win
         </div>
         
         {/* Multiplayer Button */}
@@ -264,6 +264,7 @@ export default function SinglePlayer() {
               gameActive={gameActive}
               onTimerTick={setTimeLeft}
               onWordsProgress={setWordsCompleted}
+              inputBlocked={showCustomTimeInput || showCustomWordInput}
             />
           )}
         </div>
