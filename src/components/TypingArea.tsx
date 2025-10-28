@@ -272,9 +272,7 @@ function TypingArea({
               {/* Cursor */}
               {index === typedCharacters.length && !gameOver && (
                 <span 
-                  className={`absolute left-0 top-0 bottom-0 w-0.5 bg-[#e2b714] ${
-                    gameStarted ? 'animate-pulse' : ''
-                  }`} 
+                  className={`absolute left-0 top-0 bottom-0 w-0.5 bg-[#e2b714] animate-blink`} 
                 />
               )}
               {char}

@@ -71,6 +71,9 @@ export default function SinglePlayer() {
   };
   
   const handleCustomTimeClick = () => {
+    // Pre-fill with current custom value if custom is selected
+    const isCustom = timerDuration !== 15 && timerDuration !== 30 && timerDuration !== 60;
+    if (isCustom) setCustomTimeValue(String(timerDuration));
     setShowCustomTimeInput(true);
   };
   
@@ -83,13 +86,13 @@ export default function SinglePlayer() {
         setGameActive(false);
       }
       setShowCustomTimeInput(false);
-      setCustomTimeValue('');
+      // keep customTimeValue so it pre-fills next time
     }
   };
   
   const handleCustomTimeCancel = () => {
     setShowCustomTimeInput(false);
-    setCustomTimeValue('');
+    // keep customTimeValue as-is
   };
   
   const handleWordCountSelect = (count: number) => {
@@ -104,6 +107,9 @@ export default function SinglePlayer() {
   };
   
   const handleCustomWordClick = () => {
+    // Pre-fill with current custom value if custom is selected
+    const isCustom = wordCount !== 10 && wordCount !== 25 && wordCount !== 50;
+    if (isCustom) setCustomWordValue(String(wordCount));
     setShowCustomWordInput(true);
   };
   
@@ -120,13 +126,13 @@ export default function SinglePlayer() {
         setQuoteFetched(false);
       }
       setShowCustomWordInput(false);
-      setCustomWordValue('');
+      // keep customWordValue so it pre-fills next time
     }
   };
   
   const handleCustomWordCancel = () => {
     setShowCustomWordInput(false);
-    setCustomWordValue('');
+    // keep customWordValue as-is
   };
 
   // Unified handlers for primary option group (timer/words)
@@ -167,9 +173,7 @@ export default function SinglePlayer() {
     setIncorrectChars(0);
     setTimeLeft(timerDuration);
     setWordsCompleted(0);
-    // Reset toggles to defaults
-    setIncludePunctuation(false);
-    setIncludeNumbers(false);
+    // Preserve content options (punctuation/numbers)
   }, [timerDuration]);
 
   useEffect(() => {
