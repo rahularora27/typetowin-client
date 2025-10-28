@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import Quote from "../components/Quote";
 import TypingArea from "../components/TypingArea";
 import Results from "../components/Results";
+import OptionsBar from "../components/OptionsBar";
 
 export default function SinglePlayer() {
   const [_sessionId, setSessionId] = useState<string | null>(null);
@@ -217,91 +218,18 @@ export default function SinglePlayer() {
       {/* Show options box only when game is not active and not over */}
       <div className="order-1 mb-3 min-h-[52px] w-full max-w-[1200px] flex items-center justify-center">
         {quoteFetched && !gameActive && !gameOver && (
-          <div className="flex items-center bg-[#2c2e31] rounded-lg px-4 py-2 space-x-4">
-            {/* Content Options */}
-            <div className="flex items-center space-x-3">
-              <button
-                className={`text-sm transition-colors duration-200 ${
-                  includePunctuation 
-                    ? 'text-[#e2b714]' 
-                    : 'text-gray-500 hover:text-gray-300'
-                }`}
-                onClick={handlePunctuationToggle}
-              >
-                punctuation
-              </button>
-              <button
-                className={`text-sm transition-colors duration-200 ${
-                  includeNumbers 
-                    ? 'text-[#e2b714]' 
-                    : 'text-gray-500 hover:text-gray-300'
-                }`}
-                onClick={handleNumbersToggle}
-              >
-                numbers
-              </button>
-            </div>
-            
-            {/* Vertical Separator */}
-            <div className="h-6 w-px bg-gray-700"></div>
-            
-            {/* Game Mode Selection */}
-            <div className="flex items-center space-x-3">
-              <button
-                className={`text-sm transition-colors duration-200 ${
-                  gameMode === 'timer' 
-                    ? 'text-[#e2b714]' 
-                    : 'text-gray-500 hover:text-gray-300'
-                }`}
-                onClick={() => handleModeSelect('timer')}
-              >
-                time
-              </button>
-              <button
-                className={`text-sm transition-colors duration-200 ${
-                  gameMode === 'words' 
-                    ? 'text-[#e2b714]' 
-                    : 'text-gray-500 hover:text-gray-300'
-                }`}
-                onClick={() => handleModeSelect('words')}
-              >
-                words
-              </button>
-            </div>
-            
-            {/* Vertical Separator */}
-            <div className="h-6 w-px bg-gray-700"></div>
-            
-            {/* Primary Options (time/words) - unified to avoid repetition */}
-            <div className="flex items-center space-x-2">
-              {(
-                gameMode === 'timer' ? [15, 30, 60] : [10, 25, 50]
-              ).map((val) => {
-                const isSelected = gameMode === 'timer' ? timerDuration === val : wordCount === val;
-                return (
-                  <button
-                    key={val}
-                    className={`text-sm px-3 py-1 rounded transition-colors duration-200 ${
-                      isSelected ? 'text-[#e2b714]' : 'text-gray-500 hover:text-gray-300'
-                    }`}
-                    onClick={() => handlePrimaryOptionSelect(val)}
-                  >
-                    {val}{gameMode === 'timer' ? '' : ''}
-                  </button>
-                );
-              })}
-              <button
-                className={`text-sm px-3 py-1 rounded transition-colors duration-200 ${
-                  gameMode === 'timer'
-                    ? (timerDuration !== 15 && timerDuration !== 30 && timerDuration !== 60 ? 'bg-[#e2b714] text-[#323437]' : 'text-gray-500 hover:text-gray-300')
-                    : (wordCount !== 10 && wordCount !== 25 && wordCount !== 50 ? 'bg-[#e2b714] text-[#323437]' : 'text-gray-500 hover:text-gray-300')
-                }`}
-                onClick={handleCustomPrimaryClick}
-              >
-                custom
-              </button>
-            </div>
-          </div>
+          <OptionsBar
+            gameMode={gameMode}
+            includePunctuation={includePunctuation}
+            includeNumbers={includeNumbers}
+            timerDuration={timerDuration}
+            wordCount={wordCount}
+            onPunctuationToggle={handlePunctuationToggle}
+            onNumbersToggle={handleNumbersToggle}
+            onModeSelect={handleModeSelect}
+            onPrimaryOptionSelect={handlePrimaryOptionSelect}
+            onCustomPrimaryClick={handleCustomPrimaryClick}
+          />
         )}
       </div>
 
