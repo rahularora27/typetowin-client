@@ -10,8 +10,7 @@ import SinglePlayer from "./pages/SinglePlayer.tsx";
 import MultiPlayer from "./pages/MultiPlayer.tsx";
 
 const router = createBrowserRouter([
-  { path: "/", element: <App /> },
-  { path: "/singleplayer", element: <SinglePlayer /> },
+  { path: "/", element: <SinglePlayer /> },
   { path: "/multiplayer", element: <MultiPlayer /> },
 ]);
 

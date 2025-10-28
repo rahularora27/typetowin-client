@@ -228,39 +228,53 @@ function TypingArea({
   const wordsCompleted = typedCharacters.trim().split(/\s+/).filter(word => word.length > 0).length;
 
   return (
-    <div>
-      {error && <p className="text-red-500">{error}</p>}
-      <p className="text-gray-700 text-4xl">
-        {gameMode === 'words' ? (
-          <span>{wordsCompleted} / {targetWordCount}</span>
-        ) : isMultiplayer && serverControlledTimer !== undefined ? (
-          <span>{serverControlledTimer}</span>
-        ) : (
-          <>
-            <Timer
-              duration={timerDuration}
-              isRunning={gameStarted && !gameOver}
-              onExpire={handleExpire}
-            />
-            s
-          </>
+    <div className="relative w-full">
+      {error && <p className="text-red-400 mb-4 text-center">{error}</p>}
+      
+      {/* Container for timer and text */}
+      <div className="relative max-w-[1000px] mx-auto">
+        {/* Timer/Word Counter - Top Left - Only show when game started */}
+        {gameStarted && !gameOver && (
+          <div className="absolute -left-24 top-0 text-[#e2b714] text-xl font-medium">
+            {gameMode === 'words' ? (
+              <div className="text-right">
+                <div>{wordsCompleted}</div>
+                <div className="text-gray-600 text-sm">/ {targetWordCount}</div>
+              </div>
+            ) : isMultiplayer && serverControlledTimer !== undefined ? (
+              <span>{serverControlledTimer}</span>
+            ) : (
+              <Timer
+                duration={timerDuration}
+                isRunning={gameStarted && !gameOver}
+                onExpire={handleExpire}
+              />
+            )}
+          </div>
         )}
-      </p>
-      <div className="text-3xl font-mono tracking-wide relative">
+        
+        {/* Typing Text */}
+        <div className="text-2xl leading-relaxed font-mono relative">
         {fullQuote.split('').map((char, index) => {
-          let className = '';
+          let className = 'text-gray-600'; // Untyped text
           
           if (index < typedCharacters.length) {
-            className = typedCharacters[index] === char ? 'text-green-500' : 'text-red-500';
+            // Correct characters
+            if (typedCharacters[index] === char) {
+              className = 'text-gray-300';
+            } else {
+              // Incorrect characters
+              className = 'text-red-400';
+            }
           }
           
           return (
-            <span key={index} className={`${className} relative`}>
-              {/* Add cursor line before current character */}
+            <span key={index} className={`${className} relative transition-colors duration-75`}>
+              {/* Cursor */}
               {index === typedCharacters.length && !gameOver && (
                 <span 
-                  className={`absolute left-0 top-0 bottom-0 w-0.5 bg-black ${
-                    gameStarted ? 'animate-pulse' : 'animate-blink'
+                  className={`absolute left-0 top-0 bottom-0 w-0.5 bg-[#e2b714] ${
+                    gameStarted ? 'animate-pulse' : ''
                   }`} 
                 />
               )}
@@ -268,8 +282,10 @@ function TypingArea({
             </span>
           );
         })}
+        </div>
       </div>
-      {isLoading && <p className="text-gray-500">Loading...</p>}
+      
+      {isLoading && <p className="text-gray-600 text-sm mt-4 text-center">loading...</p>}
     </div>
   );
 }
