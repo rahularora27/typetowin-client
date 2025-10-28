@@ -4,6 +4,7 @@ import Quote from "../components/Quote";
 import TypingArea from "../components/TypingArea";
 import Results from "../components/Results";
 import OptionsBar from "../components/OptionsBar";
+import NumberModal from "../components/NumberModal";
 
 export default function SinglePlayer() {
   const [_sessionId, setSessionId] = useState<string | null>(null);
@@ -261,80 +262,30 @@ export default function SinglePlayer() {
       </div>
       
       {/* Custom Time Popup */}
-      {showCustomTimeInput && (
-        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
-          <div className="bg-[#2c2e31] p-6 rounded border border-gray-700 shadow-2xl">
-            <h3 className="text-lg font-medium text-gray-300 mb-4">custom time</h3>
-            <form onSubmit={handleCustomTimeSubmit}>
-              <div className="mb-4">
-                <input
-                  type="number"
-                  value={customTimeValue}
-                  onChange={(e) => setCustomTimeValue(e.target.value)}
-                  placeholder="seconds (1-300)"
-                  min="1"
-                  max="300"
-                  className="w-full px-3 py-2 bg-[#323437] border border-gray-700 rounded text-gray-300 focus:outline-none focus:border-[#e2b714]"
-                  autoFocus
-                />
-              </div>
-              <div className="flex space-x-3 justify-end">
-                <button
-                  type="button"
-                  onClick={handleCustomTimeCancel}
-                  className="px-4 py-2 text-gray-500 hover:text-gray-300 transition-colors"
-                >
-                  cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 bg-[#e2b714] text-[#323437] rounded hover:bg-[#d5a00f] transition-colors"
-                >
-                  ok
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+      <NumberModal
+        open={showCustomTimeInput}
+        title="custom time"
+        value={customTimeValue}
+        placeholder="seconds (1-300)"
+        min={1}
+        max={300}
+        onChange={setCustomTimeValue}
+        onCancel={handleCustomTimeCancel}
+        onSubmit={handleCustomTimeSubmit}
+      />
       
       {/* Custom Word Count Popup */}
-      {showCustomWordInput && (
-        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
-          <div className="bg-[#2c2e31] p-6 rounded border border-gray-700 shadow-2xl">
-            <h3 className="text-lg font-medium text-gray-300 mb-4">custom word count</h3>
-            <form onSubmit={handleCustomWordSubmit}>
-              <div className="mb-4">
-                <input
-                  type="number"
-                  value={customWordValue}
-                  onChange={(e) => setCustomWordValue(e.target.value)}
-                  placeholder="words (1-500)"
-                  min="1"
-                  max="500"
-                  className="w-full px-3 py-2 bg-[#323437] border border-gray-700 rounded text-gray-300 focus:outline-none focus:border-[#e2b714]"
-                  autoFocus
-                />
-              </div>
-              <div className="flex space-x-3 justify-end">
-                <button
-                  type="button"
-                  onClick={handleCustomWordCancel}
-                  className="px-4 py-2 text-gray-500 hover:text-gray-300 transition-colors"
-                >
-                  cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 bg-[#e2b714] text-[#323437] rounded hover:bg-[#d5a00f] transition-colors"
-                >
-                  ok
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+      <NumberModal
+        open={showCustomWordInput}
+        title="custom word count"
+        value={customWordValue}
+        placeholder="words (1-500)"
+        min={1}
+        max={500}
+        onChange={setCustomWordValue}
+        onCancel={handleCustomWordCancel}
+        onSubmit={handleCustomWordSubmit}
+      />
     </div>
   );
 }
