@@ -124,6 +124,23 @@ export default function SinglePlayer() {
     setCustomWordValue('');
   };
 
+  // Unified handlers for primary option group (timer/words)
+  const handlePrimaryOptionSelect = (value: number) => {
+    if (gameMode === 'timer') {
+      handleTimerSelect(value);
+    } else {
+      handleWordCountSelect(value);
+    }
+  };
+
+  const handleCustomPrimaryClick = () => {
+    if (gameMode === 'timer') {
+      handleCustomTimeClick();
+    } else {
+      handleCustomWordClick();
+    }
+  };
+
   const handleGameStart = () => {
     setGameActive(true);
   };
@@ -166,13 +183,24 @@ export default function SinglePlayer() {
   }, [handleRestart, showCustomTimeInput, showCustomWordInput]);
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-[#323437] text-gray-300">
-      {/* Multiplayer Button - Fixed Position */}
-      <Link to="/multiplayer" className="fixed top-6 right-6">
-        <button className="px-4 py-2 bg-[#e2b714] hover:bg-[#d5a00f] text-[#323437] font-medium rounded transition-colors duration-200">
-          multiplayer
-        </button>
-      </Link>
+    <div className="flex flex-col min-h-screen bg-[#323437] text-gray-300">
+      {/* Navbar */}
+      <nav className="flex items-center justify-between px-8 py-6">
+        {/* Logo */}
+        <div className="text-2xl font-bold text-[#e2b714]">
+          t2w
+        </div>
+        
+        {/* Multiplayer Button */}
+        <Link to="/multiplayer">
+          <button className="px-4 py-2 text-[#e2b714] hover:text-[#d5a00f] font-medium transition-colors duration-200 cursor-pointer">
+            multiplayer
+          </button>
+        </Link>
+      </nav>
+      
+      {/* Main Content */}
+      <div className="flex flex-col items-center justify-center flex-1 px-4">
       
       {!quoteFetched && (
         <div className="text-gray-500">
@@ -187,12 +215,11 @@ export default function SinglePlayer() {
       )}
 
       {/* Show options box only when game is not active and not over */}
-      <div className="mb-8 min-h-[52px] flex items-center justify-center">
+      <div className="order-1 mb-3 min-h-[52px] w-full max-w-[1200px] flex items-center justify-center">
         {quoteFetched && !gameActive && !gameOver && (
-          <div className="flex items-center bg-[#2c2e31] rounded-lg px-4 py-3 space-x-4">
+          <div className="flex items-center bg-[#2c2e31] rounded-lg px-4 py-2 space-x-4">
             {/* Content Options */}
             <div className="flex items-center space-x-3">
-              <span className="text-gray-600 text-xs">@</span>
               <button
                 className={`text-sm transition-colors duration-200 ${
                   includePunctuation 
@@ -245,123 +272,65 @@ export default function SinglePlayer() {
             {/* Vertical Separator */}
             <div className="h-6 w-px bg-gray-700"></div>
             
-            {/* Timer/Word Count Options */}
-            {gameMode === 'timer' ? (
-              <div className="flex items-center space-x-2">
-                <button
-                  className={`text-sm px-3 py-1 rounded transition-colors duration-200 ${
-                    timerDuration === 15 
-                      ? 'bg-[#e2b714] text-[#323437]' 
-                      : 'text-gray-500 hover:text-gray-300'
-                  }`}
-                  onClick={() => handleTimerSelect(15)}
-                >
-                  15
-                </button>
-                <button
-                  className={`text-sm px-3 py-1 rounded transition-colors duration-200 ${
-                    timerDuration === 30 
-                      ? 'bg-[#e2b714] text-[#323437]' 
-                      : 'text-gray-500 hover:text-gray-300'
-                  }`}
-                  onClick={() => handleTimerSelect(30)}
-                >
-                  30
-                </button>
-                <button
-                  className={`text-sm px-3 py-1 rounded transition-colors duration-200 ${
-                    timerDuration === 60 
-                      ? 'bg-[#e2b714] text-[#323437]' 
-                      : 'text-gray-500 hover:text-gray-300'
-                  }`}
-                  onClick={() => handleTimerSelect(60)}
-                >
-                  60
-                </button>
-                <button
-                  className={`text-sm px-3 py-1 rounded transition-colors duration-200 ${
-                    timerDuration !== 15 && timerDuration !== 30 && timerDuration !== 60 
-                      ? 'bg-[#e2b714] text-[#323437]' 
-                      : 'text-gray-500 hover:text-gray-300'
-                  }`}
-                  onClick={handleCustomTimeClick}
-                >
-                  custom
-                </button>
-              </div>
-            ) : (
-              <div className="flex items-center space-x-2">
-                <button
-                  className={`text-sm px-3 py-1 rounded transition-colors duration-200 ${
-                    wordCount === 10 
-                      ? 'bg-[#e2b714] text-[#323437]' 
-                      : 'text-gray-500 hover:text-gray-300'
-                  }`}
-                  onClick={() => handleWordCountSelect(10)}
-                >
-                  10
-                </button>
-                <button
-                  className={`text-sm px-3 py-1 rounded transition-colors duration-200 ${
-                    wordCount === 25 
-                      ? 'bg-[#e2b714] text-[#323437]' 
-                      : 'text-gray-500 hover:text-gray-300'
-                  }`}
-                  onClick={() => handleWordCountSelect(25)}
-                >
-                  25
-                </button>
-                <button
-                  className={`text-sm px-3 py-1 rounded transition-colors duration-200 ${
-                    wordCount === 50 
-                      ? 'bg-[#e2b714] text-[#323437]' 
-                      : 'text-gray-500 hover:text-gray-300'
-                  }`}
-                  onClick={() => handleWordCountSelect(50)}
-                >
-                  50
-                </button>
-                <button
-                  className={`text-sm px-3 py-1 rounded transition-colors duration-200 ${
-                    wordCount !== 10 && wordCount !== 25 && wordCount !== 50 
-                      ? 'bg-[#e2b714] text-[#323437]' 
-                      : 'text-gray-500 hover:text-gray-300'
-                  }`}
-                  onClick={handleCustomWordClick}
-                >
-                  custom
-                </button>
-              </div>
-            )}
+            {/* Primary Options (time/words) - unified to avoid repetition */}
+            <div className="flex items-center space-x-2">
+              {(
+                gameMode === 'timer' ? [15, 30, 60] : [10, 25, 50]
+              ).map((val) => {
+                const isSelected = gameMode === 'timer' ? timerDuration === val : wordCount === val;
+                return (
+                  <button
+                    key={val}
+                    className={`text-sm px-3 py-1 rounded transition-colors duration-200 ${
+                      isSelected ? 'text-[#e2b714]' : 'text-gray-500 hover:text-gray-300'
+                    }`}
+                    onClick={() => handlePrimaryOptionSelect(val)}
+                  >
+                    {val}{gameMode === 'timer' ? '' : ''}
+                  </button>
+                );
+              })}
+              <button
+                className={`text-sm px-3 py-1 rounded transition-colors duration-200 ${
+                  gameMode === 'timer'
+                    ? (timerDuration !== 15 && timerDuration !== 30 && timerDuration !== 60 ? 'bg-[#e2b714] text-[#323437]' : 'text-gray-500 hover:text-gray-300')
+                    : (wordCount !== 10 && wordCount !== 25 && wordCount !== 50 ? 'bg-[#e2b714] text-[#323437]' : 'text-gray-500 hover:text-gray-300')
+                }`}
+                onClick={handleCustomPrimaryClick}
+              >
+                custom
+              </button>
+            </div>
           </div>
         )}
       </div>
 
-      {/* Typing area - always same size */}
-      <div className="w-full max-w-4xl px-6 min-h-[200px]">
-        {quoteFetched && !gameOver && (
-          <TypingArea
-            initialQuote={quote}
-            timerDuration={timerDuration}
-            onGameStart={handleGameStart}
-            onGameOver={handleGameOver}
-            includePunctuation={includePunctuation}
-            includeNumbers={includeNumbers}
-            gameMode={gameMode}
-            targetWordCount={wordCount}
-            gameActive={gameActive}
-          />
-        )}
-      </div>
-
-      {gameOver && (
-        <div className="w-full max-w-3xl px-6 flex flex-col items-center">
-          <Results correctChars={correctChars} incorrectChars={incorrectChars} />
-          <div className="mt-6 text-gray-600 text-sm">
-            <kbd className="px-2 py-1 bg-[#2c2e31] rounded border border-gray-700">Tab</kbd> - restart test
-          </div>
+        {/* Typing area - always same size */}
+        <div className="order-2 w-full max-w-5xl min-h-[200px]">
+          {quoteFetched && !gameOver && (
+            <TypingArea
+              initialQuote={quote}
+              timerDuration={timerDuration}
+              onGameStart={handleGameStart}
+              onGameOver={handleGameOver}
+              includePunctuation={includePunctuation}
+              includeNumbers={includeNumbers}
+              gameMode={gameMode}
+              targetWordCount={wordCount}
+              gameActive={gameActive}
+            />
+          )}
         </div>
-      )}
+
+        {gameOver && (
+          <div className="w-full max-w-4xl flex flex-col items-center">
+            <Results correctChars={correctChars} incorrectChars={incorrectChars} />
+            <div className="mt-6 text-gray-600 text-sm">
+              <kbd className="px-2 py-1 bg-[#2c2e31] rounded border border-gray-700">Tab</kbd> - restart test
+            </div>
+          </div>
+        )}
+      </div>
       
       {/* Custom Time Popup */}
       {showCustomTimeInput && (

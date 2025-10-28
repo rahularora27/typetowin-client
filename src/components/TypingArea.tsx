@@ -232,29 +232,31 @@ function TypingArea({
       {error && <p className="text-red-400 mb-4 text-center">{error}</p>}
       
       {/* Container for timer and text */}
-      <div className="relative max-w-[1000px] mx-auto">
-        {/* Timer/Word Counter - Top Left - Only show when game started */}
-        {gameStarted && !gameOver && (
-          <div className="absolute -left-24 top-0 text-[#e2b714] text-xl font-medium">
-            {gameMode === 'words' ? (
-              <div className="text-right">
-                <div>{wordsCompleted}</div>
-                <div className="text-gray-600 text-sm">/ {targetWordCount}</div>
-              </div>
-            ) : isMultiplayer && serverControlledTimer !== undefined ? (
-              <span>{serverControlledTimer}</span>
-            ) : (
-              <Timer
-                duration={timerDuration}
-                isRunning={gameStarted && !gameOver}
-                onExpire={handleExpire}
-              />
-            )}
-          </div>
-        )}
+      <div className="max-w-[1200px] mx-auto">
+        {/* Timer/Word Counter - Above text - Reserve space to prevent shift */}
+        <div className="text-[#e2b714] text-2xl font-medium mb-2 min-h-[28px]">
+          {gameStarted && !gameOver && (
+            <>
+              {gameMode === 'words' ? (
+                <div>
+                  <span>{wordsCompleted}</span>
+                  <span className="text-gray-600 text-lg"> / {targetWordCount}</span>
+                </div>
+              ) : isMultiplayer && serverControlledTimer !== undefined ? (
+                <span>{serverControlledTimer}</span>
+              ) : (
+                <Timer
+                  duration={timerDuration}
+                  isRunning={gameStarted && !gameOver}
+                  onExpire={handleExpire}
+                />
+              )}
+            </>
+          )}
+        </div>
         
-        {/* Typing Text */}
-        <div className="text-2xl leading-relaxed font-mono relative">
+        {/* Typing Text - Larger Size - Centered */}
+        <div className="text-3xl leading-relaxed font-mono relative text-center">
         {fullQuote.split('').map((char, index) => {
           let className = 'text-gray-600'; // Untyped text
           
