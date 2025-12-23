@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
+import { motion } from 'framer-motion';
 import Timer from './Timer';
 
 interface TypingAreaProps {
@@ -52,6 +53,12 @@ function TypingArea({
   const [gameStarted, setGameStarted] = useState(false);
   const [gameOver, setGameOver] = useState(false);
 
+  // Refs for smooth cursor animation
+  const containerRef = useRef<HTMLDivElement>(null);
+  const charRefs = useRef<(HTMLSpanElement | null)[]>([]);
+  const [cursorPos, setCursorPos] = useState({ x: 0, y: 0, height: 0 });
+  const [cursorVisible, setCursorVisible] = useState(false);
+
   // Refs to always have the latest values in callbacks
   const correctCharsRef = useRef(correctChars);
   const incorrectCharsRef = useRef(incorrectChars);
@@ -70,8 +77,44 @@ function TypingArea({
     setFullQuote(initialQuote);
     setGameStarted(false);
     setGameOver(false);
+    setCursorVisible(false);
   }, [timerDuration, initialQuote]);
-  
+
+  // Update cursor position when typedCharacters changes
+  useEffect(() => {
+    const updateCursorPosition = () => {
+      const charIndex = typedCharacters.length;
+      const charRef = charRefs.current[charIndex];
+      const container = containerRef.current;
+
+      if (charRef && container) {
+        const charRect = charRef.getBoundingClientRect();
+        const containerRect = container.getBoundingClientRect();
+
+        setCursorPos({
+          x: charRect.left - containerRect.left,
+          y: charRect.top - containerRect.top,
+          height: charRect.height
+        });
+        setCursorVisible(true);
+      } else if (charRefs.current[0] && container) {
+        // Fallback to first character position
+        const firstCharRect = charRefs.current[0].getBoundingClientRect();
+        const containerRect = container.getBoundingClientRect();
+
+        setCursorPos({
+          x: firstCharRect.left - containerRect.left,
+          y: firstCharRect.top - containerRect.top,
+          height: firstCharRect.height
+        });
+        setCursorVisible(true);
+      }
+    };
+
+    // Small delay to ensure DOM is updated
+    requestAnimationFrame(updateCursorPosition);
+  }, [typedCharacters.length, fullQuote]);
+
   // Auto start game in multiplayer when gameActive becomes true
   useEffect(() => {
     if (isMultiplayer && gameActive && !gameStarted && !gameOver) {
@@ -253,32 +296,50 @@ function TypingArea({
       {/* Container for text */}
       <div className="relative max-w-[1200px] mx-auto">
         {/* Typing Text - Larger Size - Centered */}
-        <div className="text-3xl leading-relaxed font-mono relative text-center">
-        {fullQuote.split('').map((char, index) => {
-          let className = 'text-gray-600'; // Untyped text
-          
-          if (index < typedCharacters.length) {
-            // Correct characters
-            if (typedCharacters[index] === char) {
-              className = 'text-gray-300';
-            } else {
-              // Incorrect characters
-              className = 'text-red-400';
+        <div ref={containerRef} className="text-3xl leading-relaxed font-mono relative text-center">
+          {/* Smooth animated cursor */}
+          {cursorVisible && !gameOver && (
+            <motion.span
+              className="absolute w-0.5 bg-[#e2b714] pointer-events-none"
+              initial={false}
+              animate={{
+                x: cursorPos.x,
+                y: cursorPos.y,
+                height: cursorPos.height,
+                opacity: [1, 1, 0, 0, 1],
+              }}
+              transition={{
+                x: { type: "spring", stiffness: 500, damping: 30 },
+                y: { type: "spring", stiffness: 500, damping: 30 },
+                height: { duration: 0 },
+                opacity: { duration: 1, repeat: Infinity, ease: "linear" }
+              }}
+              style={{ left: 0, top: 0 }}
+            />
+          )}
+          {fullQuote.split('').map((char, index) => {
+            let className = 'text-gray-600'; // Untyped text
+
+            if (index < typedCharacters.length) {
+              // Correct characters
+              if (typedCharacters[index] === char) {
+                className = 'text-gray-300';
+              } else {
+                // Incorrect characters
+                className = 'text-red-400';
+              }
             }
-          }
-          
-          return (
-            <span key={index} className={`${className} relative transition-colors duration-75`}>
-              {/* Cursor */}
-              {index === typedCharacters.length && !gameOver && (
-                <span 
-                  className={`absolute left-0 top-0 bottom-0 w-0.5 bg-[#e2b714] animate-blink`} 
-                />
-              )}
-              {char}
-            </span>
-          );
-        })}
+
+            return (
+              <span
+                key={index}
+                ref={(el) => { charRefs.current[index] = el; }}
+                className={`${className} transition-colors duration-100`}
+              >
+                {char}
+              </span>
+            );
+          })}
         </div>
       </div>
       
