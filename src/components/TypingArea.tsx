@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { motion } from 'framer-motion';
+import { motion, useReducedMotion } from 'framer-motion';
 import { useTimer } from '../hooks/useTimer';
 
 interface TypingAreaProps {
@@ -42,6 +42,7 @@ function TypingArea({
   onWordsProgress,
   inputBlocked = false
 }: TypingAreaProps) {
+  const prefersReducedMotion = useReducedMotion();
   const [typedCharacters, setTypedCharacters] = useState('');
   const [correctChars, setCorrectChars] = useState(0);
   const [incorrectChars, setIncorrectChars] = useState(0);
@@ -412,13 +413,13 @@ function TypingArea({
                   x: cursorPos.x,
                   y: cursorPos.y,
                   height: cursorPos.height,
-                  opacity: [1, 1, 0, 0, 1],
+                  opacity: prefersReducedMotion ? 1 : [1, 1, 0, 0, 1],
                 }}
                 transition={{
-                  x: { type: "spring", stiffness: 500, damping: 30 },
-                  y: { type: "spring", stiffness: 500, damping: 30 },
+                  x: prefersReducedMotion ? { duration: 0 } : { type: "spring", stiffness: 500, damping: 30 },
+                  y: prefersReducedMotion ? { duration: 0 } : { type: "spring", stiffness: 500, damping: 30 },
                   height: { duration: 0 },
-                  opacity: { duration: 1, repeat: Infinity, ease: "linear" }
+                  opacity: prefersReducedMotion ? { duration: 0 } : { duration: 1, repeat: Infinity, ease: "linear" },
                 }}
                 style={{ left: 0, top: 0 }}
               />
