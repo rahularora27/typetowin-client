@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import Timer from './Timer';
+import { useTimer } from '../hooks/useTimer';
 
 interface TypingAreaProps {
   initialQuote: string;
@@ -372,6 +372,13 @@ function TypingArea({
     }
   }, [gameOver, onGameOver, isMultiplayer, timerDuration]);
 
+  useTimer({
+    duration: timerDuration,
+    isRunning: !isMultiplayer && gameStarted && !gameOver,
+    onExpire: handleExpire,
+    onTick: onTimerTick,
+  });
+
   return (
     <div className="relative w-full">
       {error && <p className="text-red-400 mb-4 text-center">{error}</p>}
@@ -462,17 +469,6 @@ function TypingArea({
         )}
       </div>
 
-      {/* Hidden timer instance to drive countdown and onExpire for singleplayer */}
-      {!isMultiplayer && (
-        <div className="hidden">
-          <Timer
-            duration={timerDuration}
-            isRunning={gameStarted && !gameOver}
-            onExpire={handleExpire}
-            onTick={onTimerTick}
-          />
-        </div>
-      )}
     </div>
   );
 }
