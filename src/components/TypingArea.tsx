@@ -131,13 +131,14 @@ function TypingArea({
     }
   }, [typedCharacters.length, fullQuote.length, wordBuffer, gameOver, gameMode]);
 
-  // Reset state when timerDuration or initialQuote changes
+  // Reset state when timerDuration, initialQuote, or gameMode changes
   useEffect(() => {
     setTypedCharacters('');
     setCorrectChars(0);
     setIncorrectChars(0);
     setStartTime(null);
-    setFullQuote(initialQuote);
+    // Words mode needs a trailing space so the last word can be confirmed with a space keypress
+    setFullQuote(gameMode === 'words' ? initialQuote + ' ' : initialQuote);
     setGameStarted(false);
     setGameOver(false);
     setCursorVisible(false);
@@ -145,7 +146,7 @@ function TypingArea({
     setLineStartIndices([0]);
     setWordBuffer([]);
     isRefilling.current = false;
-  }, [timerDuration, initialQuote]);
+  }, [timerDuration, initialQuote, gameMode]);
 
   // Calculate line breaks based on character positions
   useEffect(() => {
