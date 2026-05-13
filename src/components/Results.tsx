@@ -1,22 +1,30 @@
 interface ResultsProps {
     correctChars: number;
     incorrectChars: number;
+    timeElapsed: number; // seconds
 }
 
-function Results({ correctChars, incorrectChars }: ResultsProps) {
+function Results({ correctChars, incorrectChars, timeElapsed }: ResultsProps) {
     const totalChars = correctChars + incorrectChars;
     const accuracy = totalChars > 0 ? ((correctChars / totalChars) * 100).toFixed(1) : 0;
+    const wpm = timeElapsed > 0 ? Math.round((correctChars / 5) / (timeElapsed / 60)) : 0;
 
     return (
         <div className="flex flex-col items-center justify-center space-y-6">
             {/* Main Stats */}
             <div className="flex items-center space-x-12">
+                {/* WPM */}
+                <div className="text-center">
+                    <div className="text-gray-500 text-sm mb-1">wpm</div>
+                    <div className="text-[#e2b714] text-4xl font-bold">{wpm}</div>
+                </div>
+
                 {/* Accuracy */}
                 <div className="text-center">
                     <div className="text-gray-500 text-sm mb-1">acc</div>
                     <div className="text-[#e2b714] text-4xl font-bold">{accuracy}%</div>
                 </div>
-                
+
                 {/* Correct/Incorrect */}
                 <div className="text-center">
                     <div className="text-gray-500 text-sm mb-1">characters</div>

@@ -6,7 +6,7 @@ interface TypingAreaProps {
   initialQuote: string;
   timerDuration: number;
   onGameStart: () => void;
-  onGameOver: (correctChars: number, incorrectChars: number) => void;
+  onGameOver: (correctChars: number, incorrectChars: number, timeElapsed?: number) => void;
   // Optional props for multiplayer mode
   isMultiplayer?: boolean;
   serverControlledTimer?: number;
@@ -343,12 +343,12 @@ function TypingArea({
             typedCharacters[typedCharacters.length - 1] === ' ' &&
             wordsCompleted >= targetWordCount) {
           setGameOver(true);
-          onGameOver(correct, incorrect);
+          onGameOver(correct, incorrect, startTime ? (Date.now() - startTime) / 1000 : 0);
           return;
         }
       }
     }
-  }, [typedCharacters, fullQuote, gameStarted, gameOver, gameMode, targetWordCount, onGameOver, onWordsProgress]);
+  }, [typedCharacters, fullQuote, gameStarted, gameOver, gameMode, targetWordCount, onGameOver, onWordsProgress, startTime]);
 
   // Handle server-controlled game over for multiplayer
   useEffect(() => {
@@ -367,10 +367,10 @@ function TypingArea({
     if (!gameOver && !isMultiplayer) {
       setTimeout(() => {
         setGameOver(true);
-        onGameOver(correctCharsRef.current, incorrectCharsRef.current);
+        onGameOver(correctCharsRef.current, incorrectCharsRef.current, timerDuration);
       }, 0);
     }
-  }, [gameOver, onGameOver, isMultiplayer]);
+  }, [gameOver, onGameOver, isMultiplayer, timerDuration]);
 
   // Calculate words completed for word mode display
   const wordsCompleted = typedCharacters.trim().split(/\s+/).filter(word => word.length > 0).length;

@@ -25,6 +25,7 @@ export default function SinglePlayer() {
   const [customWordValue, setCustomWordValue] = useState('');
   const [timeLeft, setTimeLeft] = useState(timerDuration);
   const [wordsCompleted, setWordsCompleted] = useState(0);
+  const [timeElapsed, setTimeElapsed] = useState(timerDuration);
 
   const handleSessionReceived = useCallback((newSessionId: string, newQuote: string) => {
     setSessionId(newSessionId);
@@ -156,12 +157,13 @@ export default function SinglePlayer() {
     setGameActive(true);
   };
 
-  const handleGameOver = useCallback((correct: number, incorrect: number) => {
+  const handleGameOver = useCallback((correct: number, incorrect: number, elapsed?: number) => {
     setGameActive(false);
     setGameOver(true);
     setCorrectChars(correct);
     setIncorrectChars(incorrect);
-  }, []);
+    setTimeElapsed(elapsed ?? timerDuration);
+  }, [timerDuration]);
 
   const handleRestart = useCallback(() => {
     setSessionId(null);
@@ -173,6 +175,7 @@ export default function SinglePlayer() {
     setIncorrectChars(0);
     setTimeLeft(timerDuration);
     setWordsCompleted(0);
+    setTimeElapsed(timerDuration);
     // Preserve content options (punctuation/numbers)
   }, [timerDuration]);
 
@@ -275,7 +278,7 @@ export default function SinglePlayer() {
 
         {gameOver && (
           <div className="w-full max-w-4xl flex flex-col items-center">
-            <Results correctChars={correctChars} incorrectChars={incorrectChars} />
+            <Results correctChars={correctChars} incorrectChars={incorrectChars} timeElapsed={timeElapsed} />
             <div className="mt-6 text-gray-600 text-sm">
               <kbd className="px-2 py-1 bg-[#2c2e31] rounded border border-gray-700">Tab</kbd> - restart test
             </div>
