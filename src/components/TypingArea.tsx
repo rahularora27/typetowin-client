@@ -372,9 +372,6 @@ function TypingArea({
     }
   }, [gameOver, onGameOver, isMultiplayer, timerDuration]);
 
-  // Calculate words completed for word mode display
-  const wordsCompleted = typedCharacters.trim().split(/\s+/).filter(word => word.length > 0).length;
-
   return (
     <div className="relative w-full">
       {error && <p className="text-red-400 mb-4 text-center">{error}</p>}
